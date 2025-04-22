@@ -1,0 +1,6 @@
+<nav class="navbar">
+  <a href="/"><img src="{{ url_for('static', filename='img/secondary_logo.png') }}" alt="Logo" style="height: 100px; padding-right: 15px;"></a>
+  <a href="/" class="{% if current_page == 'home' %}active{% else %}inactive{% endif %} nav-button">Home</a>
+  <a href="/stats_ratings" class="{% if current_page == 'stats_ratings' %}active{% else %}inactive{% endif %} nav-button">Stats/Ratings</a>
+  <a href="/matchup_maker" class="{% if current_page == 'matchup_maker' %}active{% else %}inactive{% endif %} nav-button">Matchup Maker</a>
+</nav>

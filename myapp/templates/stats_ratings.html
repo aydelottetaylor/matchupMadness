@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stats/Ratings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <main>
+        <h2 class="page-header">Data By Team</h2>
+
+        <br><br>
+        <div style="width: 100%; display: flex; justify-content: left; gap: 10px;">
+            <button id="team-stats-button" class="srbutton active">Team Stats</button>
+            <button id="team-ratings-button" class="srbutton">Team Ratings/Adv. Stats</button>
+        </div>
+
+        <br>
+        <div id="data-list"></div>
+
+        <div id="team-stats-glossary" style="display: block;">
+            <h3 class="gloss-header">Team Stats Glossary</h3>
+            <li class="gloss-line"><b>Conf</b> -  Conference Affiliation</li>
+            <li class="gloss-line"><b>G</b> - Games played </li>
+            <li class="gloss-line"><b>W</b> - Wins</li>
+            <li class="gloss-line"><b>L</b> - Losses </li>
+            <li class="gloss-line"><b>W-L%</b> - Win-Loss Percentage </li>
+            <li class="gloss-line"><b>Points</b> - Points </li>
+            <li class="gloss-line"><b>Opp. Points</b> - Opponent Points </li>
+            <li class="gloss-line"><b>PPG</b> - Points Per Game </li>
+            <li class="gloss-line"><b>Opp. PPG</b> - Opponent Points Per Game </li>
+            <li class="gloss-line"><b>MOV</b> - Margin Of Victory </li>
+            <li class="gloss-line"><b>Rebs</b> - Rebounds </li>
+            <li class="gloss-line"><b>O. Rebs</b> - Offensive Rebounds </li>
+            <li class="gloss-line"><b>Ast</b> - Assists </li>
+            <li class="gloss-line"><b>Stl</b> - Steals </li>
+            <li class="gloss-line"><b>Blk</b> - Blocks </li>
+            <li class="gloss-line"><b>TO</b> - Turn Overs </li>
+            <li class="gloss-line"><b>PF</b> - Personal Fouls</li>
+            <li class="gloss-line"><b>MP</b> - Minutes Played </li>
+            <li class="gloss-line"><b>FG</b> - Field Goals </li>
+            <li class="gloss-line"><b>FGA</b> - Field Goals Attempted </li>
+            <li class="gloss-line"><b>FGP</b> - Field Goal Percentage </li>
+            <li class="gloss-line"><b>3P</b> - 3-Point Field Goals </li>
+            <li class="gloss-line"><b>3PA</b> - 3-Point Field Goal Attempts </li>
+            <li class="gloss-line"><b>3P%</b> - 3-Point Field Goal Percentage </li>
+            <li class="gloss-line"><b>FT</b> - Free Throws </li>
+            <li class="gloss-line"><b>FTA</b> - Free Throw Attempts </li>
+            <li class="gloss-line"><b>FT%</b> - Free Throw Percentage </li>
+        </div>
+        <div id="team-ratings-glossary" style="display: none;">
+            <h3 class="gloss-header">Team Ratings Glossary</h3>
+            <li class="gloss-line"><b>Conf</b> -  Conference Affiliation</li>
+            <li class="gloss-line"><b>AP Rank</b> - Current AP Poll Ranking </li>
+            <li class="gloss-line"><b>G</b> - Games played </li>
+            <li class="gloss-line"><b>W</b> - Wins</li>
+            <li class="gloss-line"><b>L</b> - Losses </li>
+            <li class="gloss-line"><b>W-L%</b> - Win-Loss Percentage </li>
+            <li class="gloss-line"><b>SOS</b> - Strength of Schedule. A rating of strength of schedule. The rating is denominated in points above/below average, where zero is average. <br>&emsp;&emsp;&emsp;&emsp;Non-Division I games are excluded from the ratings.</li>
+            <li class="gloss-line"><b>O. SRS</b> -  The offensive component of the Simple Rating System (SRS), a rating that takes into account average point differential and strength <br>&emsp;&emsp;&emsp;&emsp;of schedule. The rating is denominated in points above/below average, where zero is average. Non-Division I games are excluded from <br>&emsp;&emsp;&emsp;&emsp;the ratings.</li>
+            <li class="gloss-line"><b>D. SRS</b> -  The defensive component of the Simple Rating System (SRS), a rating that takes into account average point differential and strength <br>&emsp;&emsp;&emsp;&emsp;of schedule. The rating is denominated in points above/below average, where zero is average. Non-Division I games are excluded from <br>&emsp;&emsp;&emsp;&emsp;the ratings.</li>
+            <li class="gloss-line"><b>SRS</b> - The Simple Rating System. A rating that takes into account average point differential and strength of schedule. The rating is denominated in <br>&emsp;&emsp;&emsp;&emsp;points above/below average, where zero is average. Non-Division I games are excluded from the ratings.</li>
+            <li class="gloss-line"><b>O. Rtg</b> - Offensive Rating. An estimate of points scored (for teams) or points produced (for players) per 100 possessions.</li>
+            <li class="gloss-line"><b>D. Rtg</b> - Defensive Rating. An estimate of points allowed (for teams) or points produced (for players) per 100 possessions.</li>
+            <li class="gloss-line"><b>N. Rtg</b> - Net Rating. An estimate of point differential per 100 posessions.</li>
+            <li class="gloss-line"><b>Pace</b> - An estimate of posessions per 40 minutes.</li>
+            <li class="gloss-line"><b>FTr</b> - Free Throw Rate. Number of Free Throw attempts per Field Goal attempt.</li>
+            <li class="gloss-line"><b>FT/FGA</b> -  Free Throws made per Field Goal attempt.</li>
+            <li class="gloss-line"><b>3PAr</b> - 3-Point Attempt Rate. Percentage of Field Goal Attempts from 3-Point Range.</li>
+            <li class="gloss-line"><b>TRB%</b> - Total Rebound Percentage. The percentage of available rebounds a team grabs relative to its opponent.</li>
+            <li class="gloss-line"><b>ORB%</b> - Offensive Rebound Percentage. The percentage of available offensive rebounds a team grabs relative to its opponent.</li>
+            <li class="gloss-line"><b>AST%</b> - Assist Percentage. The percentage of a team's field goals that are assisted by a teammate.</li>
+            <li class="gloss-line"><b>STL%</b> - Steal Percentage. An estimate of the percentage of opponent posessions that end with a steal.</li>
+            <li class="gloss-line"><b>BLK%</b> - Block Percentage. An estimate of the percentage of opponent two point field goal attempts blocked.</li>
+            <li class="gloss-line"><b>TOV%</b> - Turnover Percentage. An estimate of turnovers per 100 plays.</li>
+            <li class="gloss-line"><b>eFG%</b> - Effective Field Goal Percentage. This statistic adjusts for the fact that a 3-point field goal is worth one more point than a 2-point field goal.</li>
+            <li class="gloss-line"><b>TS%</b> - True Shooting Percentage. A measure of shooting efficiency that takes into account 2-point field goals, 3-point field goals, and free throws.</li>
+        </div>
+    </main>
+    
+    {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='js/basic-stats-controller.js') }}"></script>
+</body>
+</html>
