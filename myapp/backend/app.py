@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 import mysql.connector
 from flask_cors import CORS
 import logging
@@ -29,6 +29,10 @@ CORS(app)
 def index():
     return render_template('index.html', current_page='home')
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static', 'favicon.ico')
+
 @app.route('/stats_ratings')
 def stats_ratings():
     return render_template('stats_ratings.html', current_page='stats_ratings')
@@ -37,6 +41,27 @@ def stats_ratings():
 def matchup_maker():
     return render_template('matchup_maker.html', current_page='matchup_maker')
 
+@app.route('/api/top_25_data')
+def get_top_25_data():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        sql = """ 
+            SELECT team_name, ap_rank
+            FROM team
+            WHERE ap_rank != 0
+            ORDER BY ap_rank ASC
+        """
+        
+        cursor.execute(sql)
+        top_25_data = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(top_25_data)
+    except:
+        logging.debug(f"An error occured in get_top_25_data(): {e}")
 
 @app.route('/api/team_stats')
 def get_stats():

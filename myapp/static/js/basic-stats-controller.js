@@ -15,7 +15,7 @@ function fetchStatsData() {
             buildTable('stats');
         })
         .catch(error => {
-        console.error("Error fetching the stats data:", error);
+            console.error("Error fetching the stats data:", error);
         });
 }
 

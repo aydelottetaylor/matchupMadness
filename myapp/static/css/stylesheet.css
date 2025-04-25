@@ -72,12 +72,12 @@ body > main {
     overflow-x: auto;       /* enables horizontal scrolling */
     overflow-y: auto;
     display: inline-block;
-    max-width: 100%;        /* keeps it from overflowing the page */
+    max-width: 95%;        /* keeps it from overflowing the page */
     max-height: 1200px;
 }
 
 .stats-table {
-    min-width: 800px;       /* or wider depending on how many columns you have */
+    min-width: 80%;       /* or wider depending on how many columns you have */
     width: max-content;     /* keeps it from shrinking too small */
     border-collapse: collapse;
     margin-top: 20px;
