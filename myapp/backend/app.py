@@ -19,8 +19,8 @@ logging.basicConfig(
 
 app = Flask(
     __name__,
-    static_folder=os.path.join(os.path.pardir, 'static'),
-    template_folder=os.path.join(os.path.pardir, 'templates')
+    static_folder=os.path.join(os.path.pardir, 'frontend/static'),
+    template_folder=os.path.join(os.path.pardir, 'frontend/templates')
 )
 CORS(app)
 
