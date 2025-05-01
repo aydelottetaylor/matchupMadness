@@ -56,6 +56,16 @@ body > main {
     display: inline-block;
 }
 
+.table-header {
+    color: #102b40;
+    width: 100%;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    display: inline-block;
+}
+
 .gloss-header {
     color: #102b40;
     font-weight: bold;
@@ -74,6 +84,12 @@ body > main {
     display: inline-block;
     max-width: 95%;        /* keeps it from overflowing the page */
     max-height: 1200px;
+}
+
+.table-wrapper {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
 }
 
 .stats-table {

@@ -47,7 +47,7 @@ def get_top_25_data():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
         sql = """ 
-            SELECT team_name, ap_rank
+            SELECT ap_rank, team_name, wins, losses
             FROM team
             WHERE ap_rank != 0
             ORDER BY ap_rank ASC
@@ -55,13 +55,38 @@ def get_top_25_data():
         
         cursor.execute(sql)
         top_25_data = cursor.fetchall()
-
         cursor.close()
         conn.close()
+
+        top_25_data = [(ap_rank, team_name, f"{wins}-{losses}") for ap_rank, team_name, wins, losses in top_25_data]
 
         return jsonify(top_25_data)
     except:
         logging.debug(f"An error occured in get_top_25_data(): {e}")
+
+@app.route('/api/generateMadnessRtg')
+def generate_madness_ratings():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        sql = """
+            SELECT team_name, simple_rating_system, net_rating_adjusted, c.conference_abbreviation
+            FROM team t
+            JOIN conference c ON c.conference_id = t.conference_id
+        """
+
+        cursor.execute(sql)
+        ratings = cursor.fetchall()
+        ratings = [(team_name, round((simple_rating_system + net_rating_adjusted)/2, 4), conference) for team_name, simple_rating_system, net_rating_adjusted, conference in ratings]
+        max_rating = max(ratings, key=lambda x: x[1])[1]
+        min_rating = min(ratings, key=lambda x: x[1])[1]
+        ratings = [(team_name, round(2 * (madness_rating - min_rating) / (max_rating - min_rating) - 1, 3), conference) for team_name, madness_rating, conference in ratings]
+
+        return jsonify(ratings)
+    except Exception as e:
+        logging.debug(f"An error occurred in generate madness ratings: {e}") 
+    
 
 @app.route('/api/team_stats')
 def get_stats():
@@ -112,7 +137,7 @@ def get_stats():
             "conferences": {row[0]: row[1] for row in conferences}
         })
     except Exception as e:
-        logging.debug(f"An error occurred: {e}")   
+        logging.debug(f"An error occurred in get_stats: {e}")   
         
         
 @app.route('/api/team_ratings')
