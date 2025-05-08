@@ -84,6 +84,7 @@ function renderMatchup(team1, team2) {
         'games',
         'wins',  
         'win_percentage', 
+        'madness_rating',
         'strength_of_schedule',
         'offensive_srs',
         'defensive_srs',
@@ -132,6 +133,9 @@ function renderMatchup(team1, team2) {
                 break;
             case 'win_percentage':
                 label.textContent = 'W-L%';
+                break;
+            case 'madness_rating':
+                label.textContent = 'Madness Rtg.';
                 break;
             case 'strength_of_schedule':
                 label.textContent = 'SOS';
@@ -296,7 +300,8 @@ function formatStat(val, key) {
         '3_point_attempt_rate',
         'effective_field_goal_percentage',
         'true_shooting_percentage',
-        'free_throws_per_field_goal'
+        'free_throws_per_field_goal',
+        'madness_rating'
     ];
 
     const two = [

@@ -71,17 +71,17 @@ def generate_madness_ratings():
         cursor = conn.cursor()
 
         sql = """
-            SELECT team_name, simple_rating_system, net_rating_adjusted, c.conference_abbreviation
+            SELECT team_name, madness_rating, c.conference_abbreviation
             FROM team t
             JOIN conference c ON c.conference_id = t.conference_id
+            ORDER BY madness_rating DESC
         """
 
         cursor.execute(sql)
         ratings = cursor.fetchall()
-        ratings = [(team_name, round((simple_rating_system + net_rating_adjusted)/2, 4), conference) for team_name, simple_rating_system, net_rating_adjusted, conference in ratings]
-        max_rating = max(ratings, key=lambda x: x[1])[1]
-        min_rating = min(ratings, key=lambda x: x[1])[1]
-        ratings = [(team_name, round(2 * (madness_rating - min_rating) / (max_rating - min_rating) - 1, 3), conference) for team_name, madness_rating, conference in ratings]
+        ratings.sort(key=lambda x: x[1], reverse=True)
+
+        ratings = [(rank + 1, team_name, rating, conference) for rank, (team_name, rating, conference) in enumerate(ratings)]
 
         return jsonify(ratings)
     except Exception as e:
@@ -237,9 +237,9 @@ def get_matchup_data():
             rankings = {}
 
             stat_columns = [
-                'games', 'wins', 'win_percentage', 'strength_of_schedule',
-                'offensive_srs', 'defensive_srs', 'simple_rating_system',
-                'offensive_rating_adjusted', 'defensive_rating_adjusted',
+                'games', 'wins', 'win_percentage', 'madness_rating', 
+                'strength_of_schedule', 'offensive_srs', 'defensive_srs', 
+                'simple_rating_system','offensive_rating_adjusted', 'defensive_rating_adjusted',
                 'net_rating_adjusted', 'pace', 'free_throw_attempt_rate',
                 'free_throws_per_field_goal', '3_point_attempt_rate',
                 'team_rebound_percentage', 'offensive_rebound_percentage',
