@@ -3,6 +3,16 @@
 <head>
     <title>Home</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V1ZTVVGRXC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-V1ZTVVGRXC');
+    </script>
 </head>
 <body>
     {% include 'navbar.html' %}
