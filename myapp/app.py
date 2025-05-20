@@ -8,7 +8,7 @@ import base64
 from config import db_config
 
 
-log_path = os.path.join(os.path.dirname(__file__), 'backend_log.txt')
+log_path = os.path.join(os.path.dirname(__file__), 'backend/backend_log.txt')
 
 logging.basicConfig(
     filename=log_path,
@@ -19,8 +19,8 @@ logging.basicConfig(
 
 app = Flask(
     __name__,
-    static_folder=os.path.join(os.path.pardir, 'frontend/static'),
-    template_folder=os.path.join(os.path.pardir, 'frontend/templates')
+    static_folder='static',
+    template_folder='templates'
 )
 CORS(app)
 
@@ -31,7 +31,7 @@ def index():
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory('static', 'favicon.ico')
+    return send_from_directory('static', 'img/favicon.ico')
 
 @app.route('/stats_ratings')
 def stats_ratings():
