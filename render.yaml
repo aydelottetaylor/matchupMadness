@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: matchupmadness
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn backend.app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+    plan: free

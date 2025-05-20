@@ -5873,3 +5873,55 @@
 [2025-05-20 14:53:21,967] DEBUG in protocol: The provided initial strategy is mysql_native_password
 [2025-05-20 14:53:22,071] DEBUG in authentication: mysql_native_password completed succesfully
 [2025-05-20 14:53:22,288] INFO in _internal: 127.0.0.1 - - [20/May/2025 14:53:22] "GET /api/team_names HTTP/1.1" 200 -
+[2025-05-20 15:03:55,751] INFO in _internal: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://10.5.8.149:10000
+[2025-05-20 15:03:55,752] INFO in _internal: [33mPress CTRL+C to quit[0m
+[2025-05-20 15:04:38,193] INFO in _internal: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+[2025-05-20 15:04:38,193] INFO in _internal: [33mPress CTRL+C to quit[0m
+[2025-05-20 15:04:38,194] INFO in _internal:  * Restarting with stat
+[2025-05-20 15:04:38,588] WARNING in _internal:  * Debugger is active!
+[2025-05-20 15:04:38,591] INFO in _internal:  * Debugger PIN: 721-872-862
+[2025-05-20 15:04:40,721] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:40] "GET /matchup_maker HTTP/1.1" 200 -
+[2025-05-20 15:04:40,858] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:40] "GET /static/css/stylesheet.css HTTP/1.1" 200 -
+[2025-05-20 15:04:40,968] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:40] "GET /static/img/secondary_logo.png HTTP/1.1" 200 -
+[2025-05-20 15:04:41,043] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:41] "GET /static/js/matchup-maker-controller.js HTTP/1.1" 200 -
+[2025-05-20 15:04:41,045] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:41] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+[2025-05-20 15:04:41,372] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:41] "GET /favicon.ico HTTP/1.1" 200 -
+[2025-05-20 15:04:41,621] DEBUG in authentication: Building SSL context
+[2025-05-20 15:04:41,671] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:41] "GET / HTTP/1.1" 200 -
+[2025-05-20 15:04:41,739] DEBUG in authentication: Switching to SSL
+[2025-05-20 15:04:41,837] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:41] "[36mGET /static/css/stylesheet.css HTTP/1.1[0m" 304 -
+[2025-05-20 15:04:41,852] DEBUG in authentication: SSL has been enabled
+[2025-05-20 15:04:41,853] DEBUG in protocol: Starting authorization phase
+[2025-05-20 15:04:41,853] DEBUG in protocol: The provided initial strategy is mysql_native_password
+[2025-05-20 15:04:41,854] INFO in __init__: package: mysql.connector.plugins
+[2025-05-20 15:04:41,854] INFO in __init__: plugin_name: mysql_native_password
+[2025-05-20 15:04:41,856] INFO in __init__: AUTHENTICATION_PLUGIN_CLASS: MySQLNativePasswordAuthPlugin
+[2025-05-20 15:04:41,955] DEBUG in authentication: mysql_native_password completed succesfully
+[2025-05-20 15:04:42,013] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:42] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+[2025-05-20 15:04:42,018] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:42] "GET /static/js/index-controller.js HTTP/1.1" 200 -
+[2025-05-20 15:04:42,020] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:42] "[36mGET /static/img/secondary_logo.png HTTP/1.1[0m" 304 -
+[2025-05-20 15:04:42,177] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:42] "GET /api/team_names HTTP/1.1" 200 -
+[2025-05-20 15:04:42,178] DEBUG in authentication: Building SSL context
+[2025-05-20 15:04:42,302] DEBUG in authentication: Switching to SSL
+[2025-05-20 15:04:42,414] DEBUG in authentication: SSL has been enabled
+[2025-05-20 15:04:42,414] DEBUG in protocol: Starting authorization phase
+[2025-05-20 15:04:42,414] DEBUG in protocol: The provided initial strategy is mysql_native_password
+[2025-05-20 15:04:42,514] DEBUG in authentication: mysql_native_password completed succesfully
+[2025-05-20 15:04:42,721] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:42] "GET /api/top_25_data HTTP/1.1" 200 -
+[2025-05-20 15:04:43,137] DEBUG in authentication: Building SSL context
+[2025-05-20 15:04:43,228] DEBUG in authentication: Switching to SSL
+[2025-05-20 15:04:43,340] DEBUG in authentication: SSL has been enabled
+[2025-05-20 15:04:43,340] DEBUG in protocol: Starting authorization phase
+[2025-05-20 15:04:43,341] DEBUG in protocol: The provided initial strategy is mysql_native_password
+[2025-05-20 15:04:43,443] DEBUG in authentication: mysql_native_password completed succesfully
+[2025-05-20 15:04:43,659] INFO in _internal: 127.0.0.1 - - [20/May/2025 15:04:43] "GET /api/generateMadnessRtg HTTP/1.1" 200 -
+[2025-05-20 15:05:30,055] INFO in _internal:  * Detected change in 'C:\\Users\\aydeltay\\Desktop\\matchupMadness\\app.py', reloading
+[2025-05-20 15:05:30,097] INFO in _internal:  * Restarting with stat
+[2025-05-20 15:05:30,521] WARNING in _internal:  * Debugger is active!
+[2025-05-20 15:05:30,524] INFO in _internal:  * Debugger PIN: 721-872-862
+[2025-05-20 15:05:31,559] INFO in _internal:  * Detected change in 'C:\\Users\\aydeltay\\Desktop\\matchupMadness\\app.py', reloading
+[2025-05-20 15:05:31,609] INFO in _internal:  * Restarting with stat
