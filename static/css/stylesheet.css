@@ -78,6 +78,12 @@ body > main {
     padding-bottom: 5px;
 }
 
+.index-table-scroll-container {
+    overflow-y: auto;
+    display: inline-block;
+    max-height: 1000px;
+}
+
 .table-scroll-container {
     overflow-x: auto;       /* enables horizontal scrolling */
     overflow-y: auto;

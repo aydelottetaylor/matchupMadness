@@ -200,6 +200,29 @@ def get_team_names():
         return jsonify(team_names)
     except Exception as e:
         logging.debug(f"An error occured: {e}")
+
+
+@app.route('/api/getFloridaLogo')
+def get_florida_logo():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT logo_binary
+            FROM logos
+            WHERE team_id = 815
+        """)
+        info = cursor.fetchone()
+        info["base64"] = base64.b64encode(info["logo_binary"]).decode("utf-8")
+        
+        if "logo_binary" in info:
+            del info["logo_binary"]
+
+        return jsonify(info)
+    except Exception as e:
+        logging.error("Error in /api/getFloridaLogo: %s", str(e))
+        return jsonify({}), 500
         
         
 @app.route('/api/matchup')

@@ -78,7 +78,11 @@ function createMadnessTable() {
     });
 
     table.appendChild(tbody);
-    container.appendChild(table);
+
+    const scrollWrapper = document.createElement('div');
+    scrollWrapper.classList.add('index-table-scroll-container');
+    scrollWrapper.appendChild(table);
+    container.appendChild(scrollWrapper);
 }
 
 function sortByColumn(colIndex) {
@@ -104,6 +108,33 @@ function sortByColumn(colIndex) {
 
     lastColumn = colIndex;
     createMadnessTable();
+}
+
+function addNationalChampionshipArea() {
+    const container = document.getElementById('national-championship');
+    container.style.width = '15%';
+    container.style.height = '50%';
+    container.style.backgroundColor = '#0021A5';
+    container.style.margin = '5rem';
+
+    const header = document.createElement('h1');
+    header.classList.add('table-header');
+    header.innerHTML = 'National Champions';
+    header.style.color = 'White';
+    container.appendChild(header);
+
+    const logo = document.createElement('img');
+    fetch('/api/getFloridaLogo')
+        .then(res => res.json())
+        .then(data => {
+            logo.src = `data:image/png;base64,${data.base64}`;
+        })
+        .catch(error => {
+            console.error("An error occurred while fetching Florida logo: ", error);
+        });
+    logo.style.width = '100%';
+    container.appendChild(logo);
+
 }
 
 function createTop25Table() {
@@ -164,6 +195,7 @@ async function initializePage() {
 
     createTop25Table();
     createMadnessTable();
+    addNationalChampionshipArea();
 
 
 }
