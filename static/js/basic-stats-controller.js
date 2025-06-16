@@ -2,12 +2,15 @@ let tableData = [];
 let conferences = {};
 let sortDirection = {};
 let lastColumn = -1;
+let currentTable = 'stats';
+let conferenceFilter = 'None';
 
 const statsButton = document.getElementById('team-stats-button');
 const ratingsButton = document.getElementById('team-ratings-button');
+const confDropdown = document.getElementById('conferences-dropdown');
 
 function fetchStatsData() {
-    fetch('/api/team_stats')
+    fetch(`/api/team_stats?conference=${encodeURIComponent(conferenceFilter)}`)
         .then(res => res.json())
         .then(data => {
             tableData = [...data.teams];
@@ -20,7 +23,7 @@ function fetchStatsData() {
 }
 
 function fetchRatingsData() {
-    fetch('/api/team_ratings')
+    fetch(`/api/team_ratings?conference=${encodeURIComponent(conferenceFilter)}`)
         .then(res => res.json())
         .then(data => {
             tableData = data;
@@ -33,6 +36,7 @@ function fetchRatingsData() {
 }
 
 function buildTable(type) {
+    currentTable = type;
     const container = document.getElementById('data-list');
     container.innerHTML = '';
 
@@ -49,28 +53,30 @@ function buildTable(type) {
             3: 'W',
             4: 'L',
             5: 'W-L%',
-            6: 'Points',
-            7: 'Opp. Points',
-            8: 'PPG',
-            9: 'Opp. PPG',
-            10: 'MOV',
-            11: 'Rebs',
-            12: 'O. Rebs',
-            13: 'Ast',
-            14: 'Stl',
-            15: 'Blk',
-            16: 'TO',
-            17: 'PF',
-            18: 'MP',
-            19: 'FG',
-            20: 'FGA',
-            21: 'FGP',
-            22: '3P',
-            23: '3PA',
-            24: '3P%',
-            25: 'FT',
-            26: 'FTA',
-            27: 'FT%'
+            6: 'Conf. W',
+            7: 'Conf. L',
+            8: 'Points',
+            9: 'Opp. Points',
+            10: 'PPG',
+            11: 'Opp. PPG',
+            12: 'MOV',
+            13: 'Rebs',
+            14: 'O. Rebs',
+            15: 'Ast',
+            16: 'Stl',
+            17: 'Blk',
+            18: 'TO',
+            19: 'PF',
+            20: 'MP',
+            21: 'FG',
+            22: 'FGA',
+            23: 'FGP',
+            24: '3P',
+            25: '3PA',
+            26: '3P%',
+            27: 'FT',
+            28: 'FTA',
+            29: 'FT%'
         };
     } else {
         headers = {
@@ -81,25 +87,27 @@ function buildTable(type) {
             4: 'W',
             5: 'L',
             6: 'W-L%',
-            7: 'SOS',
-            8: 'O. SRS',
-            9: 'D. SRS',
-            10: 'SRS',
-            11: 'O. Rtg',
-            12: 'D. Rtg',
-            13: 'N. Rtg',
-            14: 'Pace',
-            15: 'FTr',
-            16: 'FT/FGA',
-            17: '3PAr',
-            18: 'TRB%',
-            19: 'ORB%',
-            20: 'AST%',
-            21: 'STL%',
-            22: 'BLK%',
-            23: 'TOV%',
-            24: 'eFG%',
-            25: 'TS%'
+            7: 'Conf. W',
+            8: 'Conf. L',
+            9: 'SOS',
+            10: 'O. SRS',
+            11: 'D. SRS',
+            12: 'SRS',
+            13: 'O. Rtg',
+            14: 'D. Rtg',
+            15: 'N. Rtg',
+            16: 'Pace',
+            17: 'FTr',
+            18: 'FT/FGA',
+            19: '3PAr',
+            20: 'TRB%',
+            21: 'ORB%',
+            22: 'AST%',
+            23: 'STL%',
+            24: 'BLK%',
+            25: 'TOV%',
+            26: 'eFG%',
+            27: 'TS%'
         };
     }
     
@@ -155,9 +163,9 @@ function formatCell(cell, index, type) {
         return '';
     }
 
-    if ((index == 8 || index == 9) && type == 'stats') {
+    if ((index == 10 || index == 11) && type == 'stats') {
         return cell.toFixed(1);
-    } else if (index == 10 && type == 'stats') {
+    } else if (index == 12 && type == 'stats') {
         return cell.toFixed(2);
     } else if (typeof cell === 'number' && !Number.isInteger(cell)) {
         return cell.toFixed(3);
@@ -202,7 +210,7 @@ function sortByColumn(colIndex, type) {
     buildTable(type); // full rebuild
 }
 
-window.addEventListener('DOMContentLoaded', fetchStatsData);
+window.addEventListener('DOMContentLoaded', fetchStatsData());
 
 statsButton.addEventListener('click', () => {
     statsButton.classList.add('active');
@@ -228,4 +236,13 @@ ratingsButton.addEventListener('click', () => {
 
     fetchRatingsData();
 
+});
+
+confDropdown.addEventListener('change', () => {
+    conferenceFilter = confDropdown.value;
+    if (currentTable == 'stats') {
+        fetchStatsData();
+    } else {
+        fetchRatingsData();
+    }
 });

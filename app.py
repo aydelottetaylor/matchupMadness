@@ -90,40 +90,81 @@ def generate_madness_ratings():
 
 @app.route('/api/team_stats')
 def get_stats():
+    conference = request.args.get('conference')
+
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        sql = """
-            SELECT  team_name, 
-                    conference_id,
-                    games,
-                    wins,
-                    losses,
-                    win_percentage,
-                    team_points,
-                    opponent_points,
-                    pts_per_game,
-                    opp_points_per_game,
-                    margin_of_victory,
-                    team_rebounds,
-                    offensive_rebounds,
-                    assists,
-                    steals,
-                    blocks,
-                    turnovers,
-                    personal_fouls,
-                    minutes_played,
-                    field_goals,
-                    field_goals_attempted,
-                    field_goal_percentage,
-                    3_point_field_goals,
-                    3_point_field_goals_attempted,
-                    3_point_percentage,
-                    free_throws,
-                    free_throws_attempted,
-                    free_throw_percentage
-            FROM team
-        """
+        if conference != 'None':
+            sql = f"""
+                    SELECT  t.team_name, 
+                            t.conference_id,
+                            t.games,
+                            t.wins,
+                            t.losses,
+                            t.win_percentage,
+                            t.wins_conf,
+                            t.losses_conf,
+                            t.team_points,
+                            t.opponent_points,
+                            t.pts_per_game,
+                            t.opp_points_per_game,
+                            t.margin_of_victory,
+                            t.team_rebounds,
+                            t.offensive_rebounds,
+                            t.assists,
+                            t.steals,
+                            t.blocks,
+                            t.turnovers,
+                            t.personal_fouls,
+                            t.minutes_played,
+                            t.field_goals,
+                            t.field_goals_attempted,
+                            t.field_goal_percentage,
+                            t.3_point_field_goals,
+                            t.3_point_field_goals_attempted,
+                            t.3_point_percentage,
+                            t.free_throws,
+                            t.free_throws_attempted,
+                            t.free_throw_percentage
+                    FROM team t
+                    JOIN conference c ON c.conference_id = t.conference_id
+                    WHERE c.conference_abbreviation = '{conference}'
+                """
+        else:
+            sql = """
+                SELECT  team_name, 
+                        conference_id,
+                        games,
+                        wins,
+                        losses,
+                        win_percentage,
+                        wins_conf,
+                        losses_conf,
+                        team_points,
+                        opponent_points,
+                        pts_per_game,
+                        opp_points_per_game,
+                        margin_of_victory,
+                        team_rebounds,
+                        offensive_rebounds,
+                        assists,
+                        steals,
+                        blocks,
+                        turnovers,
+                        personal_fouls,
+                        minutes_played,
+                        field_goals,
+                        field_goals_attempted,
+                        field_goal_percentage,
+                        3_point_field_goals,
+                        3_point_field_goals_attempted,
+                        3_point_percentage,
+                        free_throws,
+                        free_throws_attempted,
+                        free_throw_percentage
+                FROM team
+            """
         cursor.execute(sql)
         team_stats = cursor.fetchall()
 
@@ -142,38 +183,77 @@ def get_stats():
         
 @app.route('/api/team_ratings')
 def get_ratings():
+    conference = request.args.get('conference')
+
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        sql = """
-            SELECT team_name,
-                    conference_id,
-                    ap_rank,
-                    games,
-                    wins,
-                    losses,
-                    win_percentage,
-                    strength_of_schedule,
-                    offensive_srs,
-                    defensive_srs,
-                    simple_rating_system,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    pace,
-                    free_throw_attempt_rate,
-                    free_throws_per_field_goal,
-                    3_point_attempt_rate,
-                    team_rebound_percentage,
-                    offensive_rebound_percentage,
-                    assist_percentage,
-                    steal_percentage,
-                    block_percentage,
-                    turnover_percentage,
-                    effective_field_goal_percentage,
-                    true_shooting_percentage
-            FROM team
-        """
+        if conference != 'None':
+            sql = f"""
+                SELECT t.team_name,
+                        t.conference_id,
+                        t.ap_rank,
+                        t.games,
+                        t.wins,
+                        t.losses,
+                        t.win_percentage,
+                        t.wins_conf,
+                        t.losses_conf,
+                        t.strength_of_schedule,
+                        t.offensive_srs,
+                        t.defensive_srs,
+                        t.simple_rating_system,
+                        t.offensive_rating_adjusted,
+                        t.defensive_rating_adjusted,
+                        t.net_rating_adjusted,
+                        t.pace,
+                        t.free_throw_attempt_rate,
+                        t.free_throws_per_field_goal,
+                        t.3_point_attempt_rate,
+                        t.team_rebound_percentage,
+                        t.offensive_rebound_percentage,
+                        t.assist_percentage,
+                        t.steal_percentage,
+                        t.block_percentage,
+                        t.turnover_percentage,
+                        t.effective_field_goal_percentage,
+                        t.true_shooting_percentage
+                FROM team t
+                JOIN conference c ON c.conference_id = t.conference_id
+                WHERE c.conference_abbreviation = '{conference}'
+            """
+        else:
+            sql = """
+                SELECT team_name,
+                        conference_id,
+                        ap_rank,
+                        games,
+                        wins,
+                        losses,
+                        win_percentage,
+                        wins_conf,
+                        losses_conf,
+                        strength_of_schedule,
+                        offensive_srs,
+                        defensive_srs,
+                        simple_rating_system,
+                        offensive_rating_adjusted,
+                        defensive_rating_adjusted,
+                        net_rating_adjusted,
+                        pace,
+                        free_throw_attempt_rate,
+                        free_throws_per_field_goal,
+                        3_point_attempt_rate,
+                        team_rebound_percentage,
+                        offensive_rebound_percentage,
+                        assist_percentage,
+                        steal_percentage,
+                        block_percentage,
+                        turnover_percentage,
+                        effective_field_goal_percentage,
+                        true_shooting_percentage
+                FROM team
+            """
         cursor.execute(sql)
         team_ratings = cursor.fetchall()
         cursor.close()

@@ -28,12 +28,13 @@ async function fetchMadnessRatings() {
 function createMadnessTable() {
     const container = document.getElementById('madness-rating');
     container.innerHTML = '';
-    container.style.width = '32%';
+    container.style.width = '23%';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
     header.innerHTML = 'Madness Rankings';
     header.style.marginBottom = '0.5rem';
+    header.style.width = '100%';
     container.appendChild(header);
 
     const table = document.createElement('table');
@@ -81,6 +82,7 @@ function createMadnessTable() {
 
     const scrollWrapper = document.createElement('div');
     scrollWrapper.classList.add('index-table-scroll-container');
+    scrollWrapper.style.width = "100%";
     scrollWrapper.appendChild(table);
     container.appendChild(scrollWrapper);
 }
@@ -119,27 +121,19 @@ function addNationalChampionshipArea() {
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
-    header.innerHTML = 'National Champions';
+    header.innerHTML = 'National Champions 2024-25';
     header.style.color = 'White';
     container.appendChild(header);
 
     const logo = document.createElement('img');
-    fetch('/api/getFloridaLogo')
-        .then(res => res.json())
-        .then(data => {
-            logo.src = `data:image/png;base64,${data.base64}`;
-        })
-        .catch(error => {
-            console.error("An error occurred while fetching Florida logo: ", error);
-        });
+    logo.src = '../../static/img/national_champ_2025.jpg';
     logo.style.width = '100%';
     container.appendChild(logo);
-
 }
 
 function createTop25Table() {
     const container = document.getElementById('top-25-data');
-    container.style.width = '25%';
+    container.style.width = '20%';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');

@@ -13,11 +13,11 @@ body > main {
 .nav-button {
     color: #102b40;
     font-weight: bold;
-    font-size: 20px;
+    font-size: 15px;
     font-family: Arial, Helvetica, sans-serif;
-    height: 60px;
+    height: 50px;
     width: auto;
-    padding: 15px;
+    padding: 10px;
     display: flex;
     align-items: center;
 }
@@ -39,7 +39,7 @@ body > main {
     display: flex; 
     align-items: center; 
     padding: 0; 
-    height: 100px; 
+    height: 75px; 
     top: 0; 
     left: 0; 
     width: 100%;
@@ -48,7 +48,7 @@ body > main {
 
 .page-header {
     color: #102b40;
-    font-size: 30px;
+    font-size: 25px;
     font-weight: bold;
     font-family: Arial, Helvetica, sans-serif;
     text-align: left;
@@ -104,7 +104,7 @@ body > main {
     border-collapse: collapse;
     margin-top: 20px;
     font-family: Arial, sans-serif;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .stats-table thead th {
@@ -136,11 +136,26 @@ body > main {
 .srbutton {
     color: #102b40;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 20px;
+    font-size: 15px;
     font-weight: bold;
     background: white;
     border-color: #102b40;
+    border-radius: 10px;
+}
 
+.dropdown-desc {
+    color: #102b40;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.dropdown {
+    color: #102b40;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    border-color: #102b40;
     border-radius: 10px;
 }
 
@@ -186,7 +201,8 @@ body > main {
 }
 
 .matchup-row {
-    height: 15px;
+    height: 12px;
+    font-size: 13px;
 }
 
 .matchup-selector {
