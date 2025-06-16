@@ -28,12 +28,13 @@ async function fetchMadnessRatings() {
 function createMadnessTable() {
     const container = document.getElementById('madness-rating');
     container.innerHTML = '';
-    container.style.width = '32%';
+    container.style.width = '23%';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
     header.innerHTML = 'Madness Rankings';
     header.style.marginBottom = '0.5rem';
+    header.style.width = '100%';
     container.appendChild(header);
 
     const table = document.createElement('table');
@@ -78,7 +79,12 @@ function createMadnessTable() {
     });
 
     table.appendChild(tbody);
-    container.appendChild(table);
+
+    const scrollWrapper = document.createElement('div');
+    scrollWrapper.classList.add('index-table-scroll-container');
+    scrollWrapper.style.width = "100%";
+    scrollWrapper.appendChild(table);
+    container.appendChild(scrollWrapper);
 }
 
 function sortByColumn(colIndex) {
@@ -106,9 +112,28 @@ function sortByColumn(colIndex) {
     createMadnessTable();
 }
 
+function addNationalChampionshipArea() {
+    const container = document.getElementById('national-championship');
+    container.style.width = '15%';
+    container.style.height = '50%';
+    container.style.backgroundColor = '#0021A5';
+    container.style.margin = '5rem';
+
+    const header = document.createElement('h1');
+    header.classList.add('table-header');
+    header.innerHTML = 'National Champions 2024-25';
+    header.style.color = 'White';
+    container.appendChild(header);
+
+    const logo = document.createElement('img');
+    logo.src = '../../static/img/national_champ_2025.jpg';
+    logo.style.width = '100%';
+    container.appendChild(logo);
+}
+
 function createTop25Table() {
     const container = document.getElementById('top-25-data');
-    container.style.width = '25%';
+    container.style.width = '20%';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
@@ -164,6 +189,7 @@ async function initializePage() {
 
     createTop25Table();
     createMadnessTable();
+    addNationalChampionshipArea();
 
 
 }
