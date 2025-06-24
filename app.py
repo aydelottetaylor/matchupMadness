@@ -6,6 +6,9 @@ import os
 import base64
 
 from config import db_config
+import joblib
+import sklearn
+import pandas as pd
 
 
 log_path = os.path.join(os.path.dirname(__file__), 'backend/backend_log.txt')
@@ -280,31 +283,84 @@ def get_team_names():
         return jsonify(team_names)
     except Exception as e:
         logging.debug(f"An error occured: {e}")
+        
 
+@app.route('/api/generateProbs')
+def generate_probs():
+    team1_name = request.args.get('team1')
+    team2_name = request.args.get('team2')
 
-@app.route('/api/getFloridaLogo')
-def get_florida_logo():
     try:
+        model = joblib.load('model_1_0.pkl')
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
-            SELECT logo_binary
-            FROM logos
-            WHERE team_id = 815
-        """)
-        info = cursor.fetchone()
-        info["base64"] = base64.b64encode(info["logo_binary"]).decode("utf-8")
-        
-        if "logo_binary" in info:
-            del info["logo_binary"]
+            SELECT *
+            FROM team
+            WHERE team_name = %s
+        """, (team1_name,))
+        t0 = cursor.fetchone()
 
-        return jsonify(info)
+        cursor.execute("""
+            SELECT *
+            FROM team
+            WHERE team_name = %s
+        """, (team2_name,))
+        t1 = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        input_data = {
+            'sos_diff': t0['strength_of_schedule'] - t1['strength_of_schedule'],
+            'net_diff': t0['net_rating_adjusted'] - t1['net_rating_adjusted'],
+            'srs_diff': t0['simple_rating_system'] - t1['simple_rating_system'],
+            'mov_diff': t0['margin_of_victory'] - t1['margin_of_victory'],
+            'pts_per_game': t0['pts_per_game'],
+            'opp_points_per_game_Team1': t1['opp_points_per_game'],
+            'pts_per_game_Team1': t1['pts_per_game'],
+            'opp_points_per_game': t0['opp_points_per_game'],
+            'assist_percentage': t0['assist_percentage'],
+            'team_rebound_percentage': t0['team_rebound_percentage'],
+            'rebs_diff': (t0['team_rebounds'] / t0['games']) - (t1['team_rebounds'] / t1['games']),
+            'turnover_percentage': t0['turnover_percentage'],
+            'steal_percentage_Team1': t1['steal_percentage'],
+            'block_percentage_Team1': t1['block_percentage'],
+            'field_goal_percentage': t0['field_goal_percentage'],
+            '3_point_percentage': t0['3_point_percentage'],
+            'free_throw_percentage': t0['free_throw_percentage'],
+            'pace_diff': t0['pace'] - t1['pace'],
+            'offensive_rating': t0['offensive_rating'],
+            'offensive_srs': t0['offensive_srs'],
+            'defensive_srs_Team1': t1['defensive_srs'],
+            'offensive_rating_adjusted': t0['offensive_rating_adjusted'],
+            'defensive_rating_adjusted_Team1': t1['defensive_rating_adjusted'],
+            'true_shooting_percentage': t0['true_shooting_percentage'],
+            'offensive_rebound_percentage': t0['offensive_rebound_percentage'],
+            'madness_diff': t0['madness_rating'] - t1['madness_rating'],
+            'off_srs_diff': t0['offensive_srs'] - t1['offensive_srs'],
+            'def_srs_diff': t0['defensive_srs'] - t1['defensive_srs'],
+            'ts_diff': t0['true_shooting_percentage'] - t1['true_shooting_percentage'],
+            'off_rating_diff': t0['offensive_rating_adjusted'] - t1['offensive_rating_adjusted'],
+            'def_rating_diff': t0['defensive_rating_adjusted'] - t1['defensive_rating_adjusted'],
+            'ft_rate_diff': t0['free_throw_attempt_rate'] - t1['free_throw_attempt_rate'],
+            '3pa_rate_diff': t0['3_point_attempt_rate'] - t1['3_point_attempt_rate']
+        }
+
+        input_df = pd.DataFrame([input_data])
+
+        prob = model.predict_proba(input_df)[0][1]
+        prob = round(100 * (1 - prob), 1)
+
+        print(prob)
+
+        return jsonify(prob)
     except Exception as e:
-        logging.error("Error in /api/getFloridaLogo: %s", str(e))
+        logging.error("Error in /api/generateProbs: %s", str(e))
         return jsonify({}), 500
-        
-        
+
+
 @app.route('/api/matchup')
 def get_matchup_data():
     team1 = request.args.get('team1')
