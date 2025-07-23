@@ -32,17 +32,26 @@ CORS(app)
 def index():
     return render_template('index.html', current_page='home')
 
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory('static', 'img/favicon.ico')
 
-@app.route('/stats_ratings')
-def stats_ratings():
-    return render_template('stats_ratings.html', current_page='stats_ratings')
+
+@app.route('/team_stats_ratings')
+def team_stats_ratings():
+    return render_template('team_stats_ratings.html', current_page='team_stats_ratings')
+
+
+@app.route('/player_stats_ratings')
+def player_stats_ratings():
+    return render_template('player_stats_ratings.html', current_page='player_stats_ratings')
+
 
 @app.route('/matchup_maker')
 def matchup_maker():
     return render_template('matchup_maker.html', current_page='matchup_maker')
+
 
 @app.route('/api/top_25_data')
 def get_top_25_data():
@@ -64,8 +73,9 @@ def get_top_25_data():
         top_25_data = [(ap_rank, team_name, f"{wins}-{losses}") for ap_rank, team_name, wins, losses in top_25_data]
 
         return jsonify(top_25_data)
-    except:
+    except Exception as e:
         logging.debug(f"An error occured in get_top_25_data(): {e}")
+
 
 @app.route('/api/generateMadnessRtg')
 def generate_madness_ratings():
@@ -90,16 +100,72 @@ def generate_madness_ratings():
     except Exception as e:
         logging.debug(f"An error occurred in generate madness ratings: {e}") 
     
+    
+@app.route('/api/get_player_stats')
+def get_player_stats():
+    conference = request.args.get('conference')
+    team = request.args.get('team')
+    
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        sql = """SELECT p.player_name,
+                        t.team_name, 
+                        c.conference_abbreviation,
+                        p.position,
+                        p.class,
+                        p.games_played,
+                        p.games_started,
+                        p.minutes_per_game,
+                        p.fg_percentage_per_game,
+                        p.3p_percentage_per_game,
+                        p.ft_percentage_per_game,
+                        p.orb_per_game,
+                        p.drb_per_game,
+                        p.trb_per_game,
+                        p.ast_per_game,
+                        p.stl_per_game,
+                        p.blk_per_game,
+                        p.tov_per_game,
+                        p.pf_per_game,
+                        p.pts_per_game
+                FROM player p
+                JOIN team t ON p.team_id = t.team_id
+                JOIN conference c ON t.conference_id = c.conference_id"""
+                
+        if team != 'None':
+            sql = sql + f"""
+                        WHERE t.team_name = '{team}'
+                        ORDER BY t.team_name, p.player_name"""
+        elif conference != 'None':
+            sql = sql + f"""
+                        WHERE c.conference_abbreviation = '{conference}'
+                        ORDER BY t.team_name, p.player_name"""
+        else:
+            sql = sql + """
+                        ORDER BY t.team_name, p.player_name"""
+                
+        cursor.execute(sql)
+        player_data = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        return jsonify({
+            'player_data': player_data
+        })
+    except Exception as e:
+        logging.debug(f"An error occurred in get_player_stats: {e}") 
 
-@app.route('/api/team_stats')
+
+@app.route('/api/get_team_stats')
 def get_stats():
     conference = request.args.get('conference')
 
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        if conference != 'None':
-            sql = f"""
+        sql = f"""
                     SELECT  t.team_name, 
                             t.conference_id,
                             t.games,
@@ -131,43 +197,12 @@ def get_stats():
                             t.free_throws_attempted,
                             t.free_throw_percentage
                     FROM team t
-                    JOIN conference c ON c.conference_id = t.conference_id
+                """
+        if conference != 'None':
+            sql = sql + f"""JOIN conference c ON c.conference_id = t.conference_id
                     WHERE c.conference_abbreviation = '{conference}'
                 """
-        else:
-            sql = """
-                SELECT  team_name, 
-                        conference_id,
-                        games,
-                        wins,
-                        losses,
-                        win_percentage,
-                        wins_conf,
-                        losses_conf,
-                        team_points,
-                        opponent_points,
-                        pts_per_game,
-                        opp_points_per_game,
-                        margin_of_victory,
-                        team_rebounds,
-                        offensive_rebounds,
-                        assists,
-                        steals,
-                        blocks,
-                        turnovers,
-                        personal_fouls,
-                        minutes_played,
-                        field_goals,
-                        field_goals_attempted,
-                        field_goal_percentage,
-                        3_point_field_goals,
-                        3_point_field_goals_attempted,
-                        3_point_percentage,
-                        free_throws,
-                        free_throws_attempted,
-                        free_throw_percentage
-                FROM team
-            """
+        
         cursor.execute(sql)
         team_stats = cursor.fetchall()
 
@@ -184,7 +219,7 @@ def get_stats():
         logging.debug(f"An error occurred in get_stats: {e}")   
         
         
-@app.route('/api/team_ratings')
+@app.route('/api/get_team_ratings')
 def get_ratings():
     conference = request.args.get('conference')
 
@@ -266,7 +301,7 @@ def get_ratings():
         logging.debug(f"An error occured: {e}")
         
         
-@app.route('/api/team_names')
+@app.route('/api/get_team_names')
 def get_team_names():
     try:
         conn = mysql.connector.connect(**db_config)
@@ -352,8 +387,6 @@ def generate_probs():
 
         prob = model.predict_proba(input_df)[0][1]
         prob = round(100 * (1 - prob), 1)
-
-        print(prob)
 
         return jsonify(prob)
     except Exception as e:

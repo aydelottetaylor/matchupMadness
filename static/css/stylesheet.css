@@ -157,6 +157,7 @@ body > main {
     font-weight: bold;
     border-color: #102b40;
     border-radius: 10px;
+    text-align: center;
 }
 
 .srbutton.active {

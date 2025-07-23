@@ -22,7 +22,7 @@ function fetchAndAddTeams() {
     team1Select.addEventListener("change", handleTeamChange);
     team2Select.addEventListener("change", handleTeamChange);
 
-    fetch('/api/team_names')
+    fetch('/api/get_team_names')
         .then(res => res.json())
         .then(teamNames => {
             teams = teamNames;

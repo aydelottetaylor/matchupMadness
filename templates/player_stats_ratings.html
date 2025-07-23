@@ -1,0 +1,65 @@
+<!DOCTYPE html5>
+<html>
+<head>
+    <title>Player Stats/Ratings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <main>
+        <h2 class="page-header">Data By Player</h2>
+
+        <br>
+        <label for="conferences-dropdown" class="dropdown-desc">Filter by Conf.</label>
+        <select name="conferences" id="conferences-dropdown" class="dropdown">
+            <option value="None"> - None - </option>
+            <option value="A-10">A-10</option>
+            <option value="A-Sun">A-Sun</option>
+            <option value="AAC">AAC</option>
+            <option value="ACC">ACC</option>
+            <option value="AEC">AEC</option>
+            <option value="Big 12">Big 12</option>
+            <option value="Big East">Big East</option>
+            <option value="Big Sky">Big Sky</option>
+            <option value="Big South">Big South</option>
+            <option value="Big Ten">Big Ten</option>
+            <option value="Big West">Big West</option>
+            <option value="CAA">CAA</option>
+            <option value="CUSA">CUSA</option>
+            <option value="Horizon">Horizon</option>
+            <option value="Ivy">Ivy</option>
+            <option value="MAAC">MAAC</option>
+            <option value="MAC">MAC</option>
+            <option value="MEAC">MEAC</option>
+            <option value="MVC">MVC</option>
+            <option value="MWC">MWC</option>
+            <option value="NEC">NEC</option>
+            <option value="OVC">OVC</option>
+            <option value="Patriot">Patriot</option>
+            <option value="SEC">SEC</option>
+            <option value="Southern">Southern</option>
+            <option value="Southland">Southland</option>
+            <option value="Summit">Summit</option>
+            <option value="Sun Belt">Sun Belt</option>
+            <option value="SWAC">SWAC</option>
+            <option value="WAC">WAC</option>
+            <option value="WCC">WCC</option>
+        </select>
+
+        <br><br>
+        <label for="team-dropdown" class="dropdown-desc">Filter by Team</label>
+        <select name="team" id="team-dropdown" class="dropdown">
+            <option value="None"> - None - </option>
+        </select>
+        
+        <br><br>
+        <div id="data-list"></div>
+
+
+    </main>
+
+    {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='js/player-stats-controller.js') }}"></script>
+</body>
+</html>

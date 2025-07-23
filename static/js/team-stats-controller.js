@@ -10,7 +10,7 @@ const ratingsButton = document.getElementById('team-ratings-button');
 const confDropdown = document.getElementById('conferences-dropdown');
 
 function fetchStatsData() {
-    fetch(`/api/team_stats?conference=${encodeURIComponent(conferenceFilter)}`)
+    fetch(`/api/get_team_stats?conference=${encodeURIComponent(conferenceFilter)}`)
         .then(res => res.json())
         .then(data => {
             tableData = [...data.teams];
@@ -23,7 +23,7 @@ function fetchStatsData() {
 }
 
 function fetchRatingsData() {
-    fetch(`/api/team_ratings?conference=${encodeURIComponent(conferenceFilter)}`)
+    fetch(`/api/get_team_ratings?conference=${encodeURIComponent(conferenceFilter)}`)
         .then(res => res.json())
         .then(data => {
             tableData = data;
@@ -210,8 +210,6 @@ function sortByColumn(colIndex, type) {
     buildTable(type); // full rebuild
 }
 
-window.addEventListener('DOMContentLoaded', fetchStatsData());
-
 statsButton.addEventListener('click', () => {
     statsButton.classList.add('active');
     ratingsButton.classList.remove('active');
@@ -246,3 +244,5 @@ confDropdown.addEventListener('change', () => {
         fetchRatingsData();
     }
 });
+
+window.addEventListener('DOMContentLoaded', fetchStatsData());
