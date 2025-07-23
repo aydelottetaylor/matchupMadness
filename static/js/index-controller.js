@@ -139,6 +139,7 @@ function createTop25Table() {
     header.classList.add('table-header');
     header.innerHTML = 'AP Top 25';
     header.style.marginBottom = '0.5rem';
+    header.style.width = '100%';
     container.appendChild(header);
 
     const table = document.createElement('table');
@@ -178,20 +179,21 @@ function createTop25Table() {
         tbody.appendChild(tr);
     });
 
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('index-table-scroll-container');
     table.appendChild(tbody);
-    container.appendChild(table);
+    wrapper.appendChild(table);
+    container.appendChild(wrapper);
 }
 
 async function initializePage() {
     await fetchTop25Data();
     await fetchMadnessRatings();
-    console.log(madnessRatings);
+    // console.log(madnessRatings);
 
     createTop25Table();
     createMadnessTable();
     addNationalChampionshipArea();
-
-
 }
 
 
