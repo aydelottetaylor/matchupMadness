@@ -161,13 +161,13 @@ function sortByColumn(colIndex) {
 
 confDropdown.addEventListener('change', () => {
     conferenceFilter = confDropdown.value;
-    teamDropdown.value = 'None';
+    teamDropdown.value = teamFilter = 'None';
     fetchStatsData();
 });
 
 teamDropdown.addEventListener('change', () => {
     teamFilter = teamDropdown.value;
-    confDropdown.value = 'None';
+    confDropdown.value = conferenceFilter = 'None';
     fetchStatsData();
 })
 
