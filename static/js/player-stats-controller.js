@@ -12,7 +12,7 @@ const teamDropdown = document.getElementById('team-dropdown');
 
 function fetchStatsData() {
     sortDirection = {};
-    fetch(`/api/get_player_stats?conference=${encodeURIComponent(conferenceFilter)}&team=${encodeURIComponent(teamFilter)}`)
+    fetch(`/api/get_player_stats`)
         .then(res => res.json())
         .then(data => {
             tableData = data['player_data'];
@@ -107,12 +107,22 @@ function buildTableBody(table) {
 
     tableData.forEach(row => {
         const tr = document.createElement('tr');
+        let team = "";
+        let conference = "";
+
         row.forEach((cell, i) => {
             const td = document.createElement('td');
             td.textContent = formatCell(cell, i);
+            if (i == 1) {
+                team = td.textContent;
+            } else if (i == 2) {
+                conference = td.textContent;
+            }
             tr.appendChild(td);
         });
-        tbody.appendChild(tr);
+        if ((teamFilter != "None" && team == teamFilter) || (conferenceFilter != "None" && conference == conferenceFilter) || (conferenceFilter == "None" && teamFilter == "None")) {
+            tbody.appendChild(tr);
+        }
     });
 
     table.appendChild(tbody);
@@ -162,13 +172,13 @@ function sortByColumn(colIndex) {
 confDropdown.addEventListener('change', () => {
     conferenceFilter = confDropdown.value;
     teamDropdown.value = teamFilter = 'None';
-    fetchStatsData();
+    buildTable();
 });
 
 teamDropdown.addEventListener('change', () => {
     teamFilter = teamDropdown.value;
     confDropdown.value = conferenceFilter = 'None';
-    fetchStatsData();
+    buildTable();
 })
 
 window.addEventListener('DOMContentLoaded', () => {

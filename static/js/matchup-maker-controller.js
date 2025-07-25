@@ -82,8 +82,8 @@ function renderMatchup(team1, team2) {
 
     const leftGaugeCanvas = document.createElement('canvas');
     leftGaugeCanvas.id = 'gauge-left';
-    leftGaugeCanvas.width = 250;
-    leftGaugeCanvas.height = 200;
+    leftGaugeCanvas.width = 225;
+    leftGaugeCanvas.height = 175;
 
     const leftGaugeText = document.createElement('div');
     leftGaugeText.id = 'left-gauge-text';
@@ -116,8 +116,8 @@ function renderMatchup(team1, team2) {
 
     const rightGaugeCanvas = document.createElement('canvas');
     rightGaugeCanvas.id = 'gauge-right';
-    rightGaugeCanvas.width = 250;
-    rightGaugeCanvas.height = 200;
+    rightGaugeCanvas.width = 225;
+    rightGaugeCanvas.height = 175;
 
     const rightGaugeText = document.createElement('div');
     rightGaugeText.id = 'right-gauge-text';
@@ -405,7 +405,7 @@ async function renderGauges(team1, team2) {
     const leftDescription = document.getElementById('left-description');
     leftDescription.innerHTML = 'Probability that ';
     leftDescription.innerHTML += team1['team_name'];
-    leftDescription.innerHTML += ' wins as <br> the HOME team in this matchup.*';
+    leftDescription.innerHTML += ' wins as the HOME team in this matchup.*';
     
     const rightGauge = new Donut(document.getElementById('gauge-right')).setOptions(opts);
     rightGauge.maxValue = 100;
@@ -420,7 +420,7 @@ async function renderGauges(team1, team2) {
     const rightDescription = document.getElementById('right-description');
     rightDescription.innerHTML = 'Probability that ';
     rightDescription.innerHTML += team2['team_name'];
-    rightDescription.innerHTML += ' wins as <br> the HOME team in this matchup.*';
+    rightDescription.innerHTML += ' wins as the HOME team in this matchup.*';
 }
 
 function formatStat(val, key) {

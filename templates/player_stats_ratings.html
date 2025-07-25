@@ -10,7 +10,7 @@
     <main>
         <h2 class="page-header">Data By Player</h2>
 
-        <br>
+        <br><br>
         <label for="conferences-dropdown" class="dropdown-desc">Filter by Conf.</label>
         <select name="conferences" id="conferences-dropdown" class="dropdown">
             <option value="None"> - None - </option>
@@ -56,7 +56,25 @@
         <br><br>
         <div id="data-list"></div>
 
-
+        <div id='player-stats-glossary' style="display: block;">
+            <h3 class="gloss-header">Player Stats Glossary</h3>
+            <li class="gloss-line"><b>Conf</b> -  Conference Affiliation</li>
+            <li class="gloss-line"><b>GP</b> -  Games Played</li>
+            <li class="gloss-line"><b>GS</b> -  Games Started</li>
+            <li class="gloss-line"><b>MPG</b> -  Minutes Per Game</li>
+            <li class="gloss-line"><b>FG%</b> -  Field Goal Percentage</li>
+            <li class="gloss-line"><b>3P%</b> -  Three-Point Percentage</li>
+            <li class="gloss-line"><b>FT%</b> -  Free Throw Percentage</li>
+            <li class="gloss-line"><b>ORB</b> -  Offensive Rebounds Per Game</li>
+            <li class="gloss-line"><b>DRB</b> -  Defensive Rebounds Per Game</li>
+            <li class="gloss-line"><b>TRB</b> -  Team Rebounds Per Game</li>
+            <li class="gloss-line"><b>AST</b> -  Assists Per Game</li>
+            <li class="gloss-line"><b>STL</b> -  Steals Per game</li>
+            <li class="gloss-line"><b>BLK</b> -  Blocks Per Game</li>
+            <li class="gloss-line"><b>TOV</b> -  Turnovers Per Game</li>
+            <li class="gloss-line"><b>PF</b> -  Personal Fouls Per Game</li>
+            <li class="gloss-line"><b>PTS</b> -  Points Per Game</li>
+        </div>
     </main>
 
     {% include 'footer.html' %}

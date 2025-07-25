@@ -1,4 +1,5 @@
-let tableData = [];
+let statsData = [];
+let ratingsData = [];
 let conferences = {};
 let sortDirection = {};
 let lastColumn = -1;
@@ -9,33 +10,30 @@ const statsButton = document.getElementById('team-stats-button');
 const ratingsButton = document.getElementById('team-ratings-button');
 const confDropdown = document.getElementById('conferences-dropdown');
 
-function fetchStatsData() {
-    fetch(`/api/get_team_stats?conference=${encodeURIComponent(conferenceFilter)}`)
+async function fetchStatsData() {
+    await fetch(`/api/get_team_stats`)
         .then(res => res.json())
         .then(data => {
-            tableData = [...data.teams];
+            statsData = [...data.teams];
             conferences = data.conferences;
-            buildTable('stats');
         })
         .catch(error => {
             console.error("Error fetching the stats data:", error);
         });
 }
 
-function fetchRatingsData() {
-    fetch(`/api/get_team_ratings?conference=${encodeURIComponent(conferenceFilter)}`)
+async function fetchRatingsData() {
+    await fetch(`/api/get_team_ratings`)
         .then(res => res.json())
         .then(data => {
-            tableData = data;
-            console.log(tableData);
-            buildTable('ratings');
+            ratingsData = data;
         })
         .catch(error => {
             console.error("Error fetching the stats data:", error);
         });
 }
 
-function buildTable(type) {
+async function buildTable(type) {
     currentTable = type;
     const container = document.getElementById('data-list');
     container.innerHTML = '';
@@ -140,15 +138,26 @@ function buildTableBody(table, type) {
     if (oldTbody) table.removeChild(oldTbody);
 
     const tbody = document.createElement('tbody');
+    if (type == 'stats') {
+        tableData = statsData;
+    } else {
+        tableData = ratingsData;
+    }
 
     tableData.forEach(row => {
         const tr = document.createElement('tr');
+        let conference = "";
         row.forEach((cell, i) => {
             const td = document.createElement('td');
             td.textContent = formatCell(cell, i, type);
+            if (i == 1) {
+                conference = td.textContent;
+            }
             tr.appendChild(td);
         });
-        tbody.appendChild(tr);
+        if ((conference == conferenceFilter && conferenceFilter != 'None') || conferenceFilter == 'None') {
+            tbody.appendChild(tr);
+        }
     });
 
     table.appendChild(tbody);
@@ -180,6 +189,12 @@ function sortByColumn(colIndex, type) {
 
     if (lastColumn != colIndex) {
         direction = 'asc';
+    }
+
+    if (type == 'stats') {
+        tableData = statsData;
+    } else {
+        tableData = ratingsData;
     }
   
     tableData.sort((a, b) => {
@@ -218,9 +233,8 @@ statsButton.addEventListener('click', () => {
     const ratings_gloss = document.getElementById('team-ratings-glossary');
     stats_gloss.style.display = "block";
     ratings_gloss.style.display = "none";
-
-    fetchStatsData();
-
+    
+    buildTable('stats');
 });
 
 ratingsButton.addEventListener('click', () => {
@@ -232,17 +246,24 @@ ratingsButton.addEventListener('click', () => {
     stats_gloss.style.display = "none";
     ratings_gloss.style.display = "block";
 
-    fetchRatingsData();
-
+    buildTable('ratings');
 });
 
 confDropdown.addEventListener('change', () => {
     conferenceFilter = confDropdown.value;
     if (currentTable == 'stats') {
-        fetchStatsData();
+        buildTable('stats');
     } else {
-        fetchRatingsData();
+        buildTable('ratings');
     }
 });
 
-window.addEventListener('DOMContentLoaded', fetchStatsData());
+async function init() {
+    await fetchStatsData();
+    await buildTable('stats');
+    await fetchRatingsData();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    init();
+});

@@ -103,9 +103,6 @@ def generate_madness_ratings():
     
 @app.route('/api/get_player_stats')
 def get_player_stats():
-    conference = request.args.get('conference')
-    team = request.args.get('team')
-    
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -132,19 +129,8 @@ def get_player_stats():
                         p.pts_per_game
                 FROM player p
                 JOIN team t ON p.team_id = t.team_id
-                JOIN conference c ON t.conference_id = c.conference_id"""
-                
-        if team != 'None':
-            sql = sql + f"""
-                        WHERE t.team_name = '{team}'
-                        ORDER BY t.team_name, p.player_name"""
-        elif conference != 'None':
-            sql = sql + f"""
-                        WHERE c.conference_abbreviation = '{conference}'
-                        ORDER BY t.team_name, p.player_name"""
-        else:
-            sql = sql + """
-                        ORDER BY t.team_name, p.player_name"""
+                JOIN conference c ON t.conference_id = c.conference_id
+                ORDER BY t.team_name, p.player_name"""
                 
         cursor.execute(sql)
         player_data = cursor.fetchall()
@@ -160,8 +146,6 @@ def get_player_stats():
 
 @app.route('/api/get_team_stats')
 def get_stats():
-    conference = request.args.get('conference')
-
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -198,10 +182,6 @@ def get_stats():
                             t.free_throw_percentage
                     FROM team t
                 """
-        if conference != 'None':
-            sql = sql + f"""JOIN conference c ON c.conference_id = t.conference_id
-                    WHERE c.conference_abbreviation = '{conference}'
-                """
         
         cursor.execute(sql)
         team_stats = cursor.fetchall()
@@ -221,77 +201,36 @@ def get_stats():
         
 @app.route('/api/get_team_ratings')
 def get_ratings():
-    conference = request.args.get('conference')
-
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        if conference != 'None':
-            sql = f"""
-                SELECT t.team_name,
-                        t.conference_id,
-                        t.ap_rank,
-                        t.games,
-                        t.wins,
-                        t.losses,
-                        t.win_percentage,
-                        t.wins_conf,
-                        t.losses_conf,
-                        t.strength_of_schedule,
-                        t.offensive_srs,
-                        t.defensive_srs,
-                        t.simple_rating_system,
-                        t.offensive_rating_adjusted,
-                        t.defensive_rating_adjusted,
-                        t.net_rating_adjusted,
-                        t.pace,
-                        t.free_throw_attempt_rate,
-                        t.free_throws_per_field_goal,
-                        t.3_point_attempt_rate,
-                        t.team_rebound_percentage,
-                        t.offensive_rebound_percentage,
-                        t.assist_percentage,
-                        t.steal_percentage,
-                        t.block_percentage,
-                        t.turnover_percentage,
-                        t.effective_field_goal_percentage,
-                        t.true_shooting_percentage
-                FROM team t
-                JOIN conference c ON c.conference_id = t.conference_id
-                WHERE c.conference_abbreviation = '{conference}'
-            """
-        else:
-            sql = """
-                SELECT team_name,
-                        conference_id,
-                        ap_rank,
-                        games,
-                        wins,
-                        losses,
-                        win_percentage,
-                        wins_conf,
-                        losses_conf,
-                        strength_of_schedule,
-                        offensive_srs,
-                        defensive_srs,
-                        simple_rating_system,
-                        offensive_rating_adjusted,
-                        defensive_rating_adjusted,
-                        net_rating_adjusted,
-                        pace,
-                        free_throw_attempt_rate,
-                        free_throws_per_field_goal,
-                        3_point_attempt_rate,
-                        team_rebound_percentage,
-                        offensive_rebound_percentage,
-                        assist_percentage,
-                        steal_percentage,
-                        block_percentage,
-                        turnover_percentage,
-                        effective_field_goal_percentage,
-                        true_shooting_percentage
-                FROM team
-            """
+        sql = f"""
+            SELECT t.team_name,
+                    t.conference_id,
+                    t.ap_rank,
+                    t.games,
+                    t.wins,
+                    t.strength_of_schedule,
+                    t.offensive_srs,
+                    t.defensive_srs,
+                    t.simple_rating_system,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.pace,
+                    t.free_throw_attempt_rate,
+                    t.free_throws_per_field_goal,
+                    t.3_point_attempt_rate,
+                    t.team_rebound_percentage,
+                    t.offensive_rebound_percentage,
+                    t.assist_percentage,
+                    t.steal_percentage,
+                    t.block_percentage,
+                    t.turnover_percentage,
+                    t.effective_field_goal_percentage,
+                    t.true_shooting_percentage
+            FROM team t
+        """
         cursor.execute(sql)
         team_ratings = cursor.fetchall()
         cursor.close()

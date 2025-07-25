@@ -28,7 +28,7 @@ async function fetchMadnessRatings() {
 function createMadnessTable() {
     const container = document.getElementById('madness-rating');
     container.innerHTML = '';
-    container.style.width = '23%';
+    container.style.width = 'auto';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
@@ -114,10 +114,10 @@ function sortByColumn(colIndex) {
 
 function addNationalChampionshipArea() {
     const container = document.getElementById('national-championship');
-    container.style.width = '15%';
+    container.style.width = '15.625rem';
     container.style.height = '50%';
     container.style.backgroundColor = '#0021A5';
-    container.style.margin = '5rem';
+    container.style.margin = '3rem';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
@@ -133,7 +133,7 @@ function addNationalChampionshipArea() {
 
 function createTop25Table() {
     const container = document.getElementById('top-25-data');
-    container.style.width = '20%';
+    container.style.width = 'auto';
 
     const header = document.createElement('h1');
     header.classList.add('table-header');
@@ -179,11 +179,8 @@ function createTop25Table() {
         tbody.appendChild(tr);
     });
 
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('index-table-scroll-container');
     table.appendChild(tbody);
-    wrapper.appendChild(table);
-    container.appendChild(wrapper);
+    container.appendChild(table);
 }
 
 async function initializePage() {
