@@ -210,6 +210,7 @@ def get_ratings():
                     t.ap_rank,
                     t.games,
                     t.wins,
+                    t.losses,
                     t.strength_of_schedule,
                     t.offensive_srs,
                     t.defensive_srs,
