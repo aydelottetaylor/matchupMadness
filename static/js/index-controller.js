@@ -1,5 +1,8 @@
 let top25Data = {};
 let madnessRatings = {};
+let contenders = {};
+let nextUp = {};
+let midMajors = {};
 let sortDirection = {};
 let lastColumn = -1;
 
@@ -22,6 +25,35 @@ async function fetchMadnessRatings() {
         })
         .catch(error => {
             console.error("An error occurred while fetching madness data: ", error);
+        });
+}
+
+async function fetchContendersNextAndMid() {
+    await fetch('/api/get_contenders')
+        .then(res => res.json())
+        .then(data => {
+            contenders = data;
+        })
+        .catch(error => {
+            console.error("An error occurred while fetching contenders: ", error);
+        });
+
+    await fetch('/api/get_next_up')
+        .then(res => res.json())
+        .then(data => {
+            nextUp = data;
+        })
+        .catch(error => {
+            console.error("An error occurred while fetching next up: ", error);
+        });
+
+    await fetch('/api/get_best_mid_majors')
+        .then(res => res.json())
+        .then(data => {
+            midMajors = data;
+        })
+        .catch(error => {
+            console.error("An error occurred while fetching mid majors: ", error);
         });
 }
 
@@ -112,23 +144,162 @@ function sortByColumn(colIndex) {
     createMadnessTable();
 }
 
-function addNationalChampionshipArea() {
-    const container = document.getElementById('national-championship');
-    container.style.width = '15.625rem';
-    container.style.height = '50%';
-    container.style.backgroundColor = '#0021A5';
-    container.style.margin = '3rem';
+function createTeamSection() {
+    let headers = [
+        'Team',
+        'Conf.',
+        'W',
+        'L',
+        'AP Rank',
+        'Madness Rtg.',
+        'Net Rtg,',
+        'O Rtg.',
+        'D Rtg.',
+        'SOS',
+        'SRS'
+    ];
 
-    const header = document.createElement('h1');
-    header.classList.add('table-header');
-    header.innerHTML = 'National Champions 2024-25';
-    header.style.color = 'White';
-    container.appendChild(header);
+    const container = document.getElementById('teams');
+    container.style.width = 'auto';
 
-    const logo = document.createElement('img');
-    logo.src = '../../static/img/national_champ_2025.jpg';
-    logo.style.width = '100%';
-    container.appendChild(logo);
+    // Add contender header and table
+    const header1 = document.createElement('h1');
+    header1.classList.add('table-header');
+    header1.innerHTML = 'Championship Contenders';
+    header1.style.textAlign = 'left';
+    header1.style.marginRight = '2rem';
+    header1.style.marginBottom = '0.3rem';
+    container.appendChild(header1);
+
+    const contenderTable = document.createElement('table');
+    contenderTable.style.marginTop = '0px';
+    contenderTable.classList.add('stats-table');
+    contenderTable.style.width = "100%";
+
+    const contenderHead = document.createElement('thead');
+    const contenderHeaderRow = document.createElement('tr');
+
+    Object.keys(headers).forEach(colIndex => {
+        const th = document.createElement('th');
+        th.textContent = headers[colIndex];
+        th.style.cursor = 'pointer';
+
+        contenderHeaderRow.appendChild(th);
+    });
+
+    contenderHead.appendChild(contenderHeaderRow);
+    contenderTable.appendChild(contenderHead);
+
+    const contenderBody = document.createElement('tbody');
+
+    contenders.forEach(row => {
+        const tr = document.createElement('tr');
+        row.forEach((cell, i) => {
+            const td = document.createElement('td');
+            if (cell != '0') {
+                td.textContent = cell;
+            } else {
+                td.textContent = '';
+            }
+            tr.appendChild(td);
+        });
+        contenderBody.appendChild(tr);
+    });
+
+    contenderTable.appendChild(contenderBody);
+    container.appendChild(contenderTable);
+
+    // Add next up header and table
+    const header2 = document.createElement('h1');
+    header2.classList.add('table-header');
+    header2.innerHTML = 'Next Up';
+    header2.style.textAlign = 'left';
+    header2.style.marginBottom = '0.3rem';
+    container.appendChild(header2);
+
+    const nextTable = document.createElement('table');
+    nextTable.style.marginTop = '0px';
+    nextTable.classList.add('stats-table');
+    nextTable.style.width = "100%";
+
+    const nextHead = document.createElement('thead');
+    const nextHeaderRow = document.createElement('tr');
+
+    Object.keys(headers).forEach(colIndex => {
+        const th = document.createElement('th');
+        th.textContent = headers[colIndex];
+        th.style.cursor = 'pointer';
+
+        nextHeaderRow.appendChild(th);
+    });
+
+    nextHead.appendChild(nextHeaderRow);
+    nextTable.appendChild(nextHead);
+
+    const nextBody = document.createElement('tbody');
+
+    nextUp.forEach(row => {
+        const tr = document.createElement('tr');
+        row.forEach((cell, i) => {
+            const td = document.createElement('td');
+            if (cell != '0') {
+                td.textContent = cell;
+            } else {
+                td.textContent = '';
+            }
+            tr.appendChild(td);
+        });
+        nextBody.appendChild(tr);
+    });
+
+    nextTable.appendChild(nextBody);
+    container.appendChild(nextTable);
+
+    // Add mid major header and table
+    const header3 = document.createElement('h1');
+    header3.classList.add('table-header');
+    header3.innerHTML = 'Best Mid-Majors';
+    header3.style.textAlign = 'left';
+    header3.style.marginBottom = '0.3rem';
+    container.appendChild(header3);
+
+    const midTable = document.createElement('table');
+    midTable.style.marginTop = '0px';
+    midTable.classList.add('stats-table');
+    midTable.style.width = "100%";
+
+    const midHead = document.createElement('thead');
+    const midHeaderRow = document.createElement('tr');
+
+    Object.keys(headers).forEach(colIndex => {
+        const th = document.createElement('th');
+        th.textContent = headers[colIndex];
+        th.style.cursor = 'pointer';
+
+        midHeaderRow.appendChild(th);
+    });
+
+    midHead.appendChild(midHeaderRow);
+    midTable.appendChild(midHead);
+
+    const midBody = document.createElement('tbody');
+
+    midMajors.forEach(row => {
+        const tr = document.createElement('tr');
+        row.forEach((cell, i) => {
+            const td = document.createElement('td');
+            if (cell != '0') {
+                td.textContent = cell;
+            } else {
+                td.textContent = '';
+            }
+            tr.appendChild(td);
+        });
+        midBody.appendChild(tr);
+    });
+
+    midTable.appendChild(midBody);
+    container.appendChild(midTable);
 }
 
 function createTop25Table() {
@@ -150,7 +321,7 @@ function createTop25Table() {
     headers = [
         'Rk.',
         'Team',
-        "W-L"
+        'W-L'
     ];
 
     const thead = document.createElement('thead');
@@ -185,12 +356,13 @@ function createTop25Table() {
 
 async function initializePage() {
     await fetchTop25Data();
-    await fetchMadnessRatings();
-    // console.log(madnessRatings);
-
     createTop25Table();
+
+    await fetchMadnessRatings();
     createMadnessTable();
-    addNationalChampionshipArea();
+
+    await fetchContendersNextAndMid();
+    createTeamSection();
 }
 
 
