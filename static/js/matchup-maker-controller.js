@@ -1,12 +1,19 @@
 let teams = {}
 let team1_prob = 0;
 let team2_prob = 0;
+let first = 0;
 
-function handleTeamChange() {
+async function handleTeamChange() {
     const team1 = document.getElementById('team1-select').value;
     const team2 = document.getElementById('team2-select').value;
 
     if (team1 != ' - Select A Team - ' && team2 != ' - Select A Team - ' && team1 !== team2) {
+        if (first != 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+            first = 1;
+        }
+
         compareTeams();
     }
 }
@@ -35,7 +42,7 @@ function fetchAndAddTeams() {
         });
 }
 
-function compareTeams() {
+async function compareTeams() {
     const team1 = document.getElementById('team1-select').value;
     const team2 = document.getElementById('team2-select').value;
 

@@ -197,6 +197,186 @@ def get_stats():
         })
     except Exception as e:
         logging.debug(f"An error occurred in get_stats: {e}")   
+  
+  
+@app.route('/api/get_contenders')
+def get_contenders():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        sql = """
+            SELECT DISTINCT(t.team_name),
+                c.conference_abbreviation,
+                t.wins,
+                t.losses,
+                t.ap_rank,
+                t.madness_rating,
+                t.net_rating_adjusted,
+                t.offensive_rating_adjusted, 
+                t.defensive_rating_adjusted, 
+                t.strength_of_schedule,
+                t.simple_rating_system
+            FROM team t
+            JOIN (
+            SELECT team_name
+            FROM team 
+            ORDER BY offensive_rating_adjusted DESC
+            LIMIT 20
+            ) top20 ON t.team_name = top20.team_name
+            JOIN (
+            SELECT team_name
+            FROM team 
+            ORDER BY defensive_rating_adjusted ASC
+            LIMIT 20
+            ) bottom20 ON t.team_name = bottom20.team_name
+            JOIN (
+            SELECT team_name
+            FROM team
+            ORDER BY strength_of_schedule DESC
+            LIMIT 50
+            ) sos ON t.team_name = sos.team_name
+            JOIN conference c on c.conference_id = t.conference_id
+            ORDER BY net_rating_adjusted DESC
+        """
+        cursor.execute(sql)
+        contenders = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        return jsonify(contenders)
+    except Exception as e:
+        logging.debug(f"An error occured: {e}")
+
+
+@app.route('/api/get_next_up')
+def get_next_up():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        sql = """
+            SELECT DISTINCT(t.team_name),
+                c.conference_abbreviation,
+                t.wins,
+                t.losses,
+                t.ap_rank,
+                t.madness_rating,
+                t.net_rating_adjusted,
+                t.offensive_rating_adjusted, 
+                t.defensive_rating_adjusted,  
+                t.strength_of_schedule,
+                t.simple_rating_system
+            FROM team t
+            JOIN (
+                SELECT team_name
+                FROM team 
+                ORDER BY offensive_rating_adjusted DESC
+                LIMIT 35
+            ) top20 ON t.team_name = top20.team_name
+            JOIN (
+                SELECT team_name
+                FROM team 
+                ORDER BY defensive_rating_adjusted ASC
+                LIMIT 35
+            ) bottom20 ON t.team_name = bottom20.team_name
+            JOIN (
+                SELECT team_name
+                FROM team
+                ORDER BY strength_of_schedule DESC
+                LIMIT 100
+            ) sos ON t.team_name = sos.team_name
+            JOIN conference c on c.conference_id = t.conference_id
+            
+            WHERE t.team_name NOT IN (
+                SELECT DISTINCT(t.team_name)
+                FROM team t
+                JOIN (
+                    SELECT team_name
+                    FROM team 
+                    ORDER BY offensive_rating_adjusted DESC
+                    LIMIT 20
+                ) top20 ON t.team_name = top20.team_name
+                JOIN (
+                    SELECT team_name
+                    FROM team 
+                    ORDER BY defensive_rating_adjusted ASC
+                    LIMIT 20
+                ) bottom20 ON t.team_name = bottom20.team_name
+                JOIN (
+                    SELECT team_name
+                    FROM team
+                    ORDER BY strength_of_schedule DESC
+                    LIMIT 50
+                ) sos ON t.team_name = sos.team_name
+            )
+            
+            ORDER BY t.net_rating_adjusted DESC
+        """
+        cursor.execute(sql)
+        next_up = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        return jsonify(next_up)
+    except Exception as e:
+        logging.debug(f"An error occured: {e}")
+
+
+@app.route('/api/get_best_mid_majors')      
+def get_best_mid_majors():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        sql = """
+            SELECT DISTINCT(t.team_name),
+                c.conference_abbreviation,
+                t.wins,
+                t.losses,
+                t.ap_rank,
+                t.madness_rating,
+                t.net_rating_adjusted,
+                t.offensive_rating_adjusted, 
+                t.defensive_rating_adjusted,  
+                t.strength_of_schedule,
+                t.simple_rating_system
+            FROM team t
+            JOIN (
+            SELECT t.team_name
+            FROM team t 
+            JOIN conference c on c.conference_id = t.conference_id
+            WHERE c.conference_abbreviation NOT IN ('Big Ten', 'ACC', 'Big 12', 'Big East', 'SEC')
+            ORDER BY offensive_rating_adjusted DESC
+            LIMIT 20
+            ) top20 ON t.team_name = top20.team_name
+            JOIN (
+            SELECT t.team_name
+            FROM team t
+            JOIN conference c on c.conference_id = t.conference_id
+            WHERE c.conference_abbreviation NOT IN ('Big Ten', 'ACC', 'Big 12', 'Big East', 'SEC')
+            ORDER BY defensive_rating_adjusted ASC
+            LIMIT 20
+            ) bottom20 ON t.team_name = bottom20.team_name
+            JOIN (
+            SELECT t.team_name
+            FROM team t
+            JOIN conference c on c.conference_id = t.conference_id
+            WHERE c.conference_abbreviation NOT IN ('Big Ten', 'ACC', 'Big 12', 'Big East', 'SEC')
+            ORDER BY strength_of_schedule DESC
+            LIMIT 30
+            ) sos ON t.team_name = sos.team_name
+            JOIN conference c on c.conference_id = t.conference_id
+            ORDER BY net_rating_adjusted DESC
+        """
+        cursor.execute(sql)
+        mid_majors = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        return jsonify(mid_majors)
+    except Exception as e:
+        logging.debug(f"An error occured: {e}")
         
         
 @app.route('/api/get_team_ratings')
