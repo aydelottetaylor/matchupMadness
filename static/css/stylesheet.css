@@ -181,6 +181,7 @@ body > main {
     padding: 0.9rem 0;
     font-size: 0.875rem;
     margin-top: 2.5rem;
+    height: 5%;
     width: 100%;
 }
 
@@ -308,4 +309,9 @@ body > main {
     font-weight: bold;
     color: #102b40;
     font-family: Arial, sans-serif;
+}
+
+.footer-padding {
+    height: 7%;
+    width: 100%;
 }
