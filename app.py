@@ -348,7 +348,7 @@ def get_best_mid_majors():
             JOIN conference c on c.conference_id = t.conference_id
             WHERE c.conference_abbreviation NOT IN ('Big Ten', 'ACC', 'Big 12', 'Big East', 'SEC')
             ORDER BY offensive_rating_adjusted DESC
-            LIMIT 20
+            LIMIT 25
             ) top20 ON t.team_name = top20.team_name
             JOIN (
             SELECT t.team_name
@@ -356,7 +356,7 @@ def get_best_mid_majors():
             JOIN conference c on c.conference_id = t.conference_id
             WHERE c.conference_abbreviation NOT IN ('Big Ten', 'ACC', 'Big 12', 'Big East', 'SEC')
             ORDER BY defensive_rating_adjusted ASC
-            LIMIT 20
+            LIMIT 25
             ) bottom20 ON t.team_name = bottom20.team_name
             JOIN (
             SELECT t.team_name
@@ -364,7 +364,7 @@ def get_best_mid_majors():
             JOIN conference c on c.conference_id = t.conference_id
             WHERE c.conference_abbreviation NOT IN ('Big Ten', 'ACC', 'Big 12', 'Big East', 'SEC')
             ORDER BY strength_of_schedule DESC
-            LIMIT 30
+            LIMIT 50
             ) sos ON t.team_name = sos.team_name
             JOIN conference c on c.conference_id = t.conference_id
             ORDER BY net_rating_adjusted DESC
