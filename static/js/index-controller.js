@@ -115,6 +115,7 @@ function createMadnessTable() {
     const scrollWrapper = document.createElement('div');
     scrollWrapper.classList.add('index-table-scroll-container');
     scrollWrapper.style.width = "100%";
+    scrollWrapper.style.height = "750px";
     scrollWrapper.appendChild(table);
     container.appendChild(scrollWrapper);
 }
@@ -196,7 +197,7 @@ function createTeamSection() {
         const tr = document.createElement('tr');
         row.forEach((cell, i) => {
             const td = document.createElement('td');
-            if (cell != '0') {
+            if (i == 3 || cell != '0') {
                 td.textContent = cell;
             } else {
                 td.textContent = '';
@@ -242,7 +243,7 @@ function createTeamSection() {
         const tr = document.createElement('tr');
         row.forEach((cell, i) => {
             const td = document.createElement('td');
-            if (cell != '0') {
+            if (i == 3 || cell != '0') {
                 td.textContent = cell;
             } else {
                 td.textContent = '';
@@ -288,7 +289,7 @@ function createTeamSection() {
         const tr = document.createElement('tr');
         row.forEach((cell, i) => {
             const td = document.createElement('td');
-            if (cell != '0') {
+            if (i == 3 || cell != '0') {
                 td.textContent = cell;
             } else {
                 td.textContent = '';
