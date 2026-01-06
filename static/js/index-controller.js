@@ -6,6 +6,9 @@ let midMajors = {};
 let sortDirection = {};
 let lastColumn = -1;
 
+const img = document.getElementById('top68Chart')
+img.src = '/api/create_top_68.png?t=' + Date.now();
+
 async function fetchTop25Data() {
     await fetch('/api/top_25_data')
         .then(res => res.json())
@@ -78,6 +81,7 @@ function createMadnessTable() {
         'Rk.',
         'Team',
         'Madness Rtg.',
+        'Net Rtg. Adj.',
         'Conf.'
     ];
 
@@ -322,7 +326,8 @@ function createTop25Table() {
     headers = [
         'Rk.',
         'Team',
-        'W-L'
+        'W-L',
+        'Conf'
     ];
 
     const thead = document.createElement('thead');
