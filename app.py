@@ -1,15 +1,17 @@
-from flask import Flask, jsonify, render_template, request, send_from_directory
 import mysql.connector
-from flask_cors import CORS
 import logging
 import os
 import base64
-
-from config import db_config
+import io
 import joblib
-import sklearn
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import pandas as pd
 
+from flask_cors import CORS
+from config import db_config
+from flask import Flask, jsonify, render_template, request, send_from_directory, Response
 
 log_path = os.path.join(os.path.dirname(__file__), 'backend/backend_log.txt')
 
@@ -59,8 +61,9 @@ def get_top_25_data():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
         sql = """ 
-            SELECT ap_rank, team_name, wins, losses
-            FROM team
+            SELECT ap_rank, team_name, wins, losses, c.conference_abbreviation
+            FROM team t
+            JOIN conference c ON c.conference_id = t.conference_id
             WHERE ap_rank != 0
             ORDER BY ap_rank ASC
         """
@@ -70,7 +73,7 @@ def get_top_25_data():
         cursor.close()
         conn.close()
 
-        top_25_data = [(ap_rank, team_name, f"{wins}-{losses}") for ap_rank, team_name, wins, losses in top_25_data]
+        top_25_data = [(ap_rank, team_name, f"{wins}-{losses}", conf) for ap_rank, team_name, wins, losses, conf in top_25_data]
 
         return jsonify(top_25_data)
     except Exception as e:
@@ -84,7 +87,7 @@ def generate_madness_ratings():
         cursor = conn.cursor()
 
         sql = """
-            SELECT team_name, madness_rating, c.conference_abbreviation
+            SELECT team_name, madness_rating, net_rating_adjusted, c.conference_abbreviation
             FROM team t
             JOIN conference c ON c.conference_id = t.conference_id
             ORDER BY madness_rating DESC
@@ -94,7 +97,7 @@ def generate_madness_ratings():
         ratings = cursor.fetchall()
         ratings.sort(key=lambda x: x[1], reverse=True)
 
-        ratings = [(rank + 1, team_name, rating, conference) for rank, (team_name, rating, conference) in enumerate(ratings)]
+        ratings = [(rank + 1, team_name, rating, net, conference) for rank, (team_name, rating, net, conference) in enumerate(ratings)]
 
         return jsonify(ratings)
     except Exception as e:
@@ -611,6 +614,112 @@ def get_matchup_data():
         logging.error("Error in /api/matchup: %s", str(e))
         return jsonify({}), 500
     
+
+@app.route('/api/create_top_68.png')
+def create_top_68():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        sql = f"""
+            SELECT team_name,
+                   offensive_rating_adjusted,
+                   defensive_rating_adjusted,
+                   net_rating_adjusted
+            FROM team
+            ORDER BY madness_rating DESC
+            LIMIT 68
+        """
+        cursor.execute(sql)
+        teams = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        frame = pd.DataFrame(
+            teams,
+            columns=[
+                'team_name',
+                'offensive_rating_adjusted',
+                'defensive_rating_adjusted',
+                'net_rating_adjusted'
+            ],
+        )
+        
+        off_threshold = 121
+        def_threshold = 89
+
+        fig = plt.figure(figsize=(16, 10))
+        plt.scatter(frame["offensive_rating_adjusted"], frame["defensive_rating_adjusted"])
+
+        for _, row in frame.iterrows():
+            plt.annotate(
+                row["team_name"],
+                (row["offensive_rating_adjusted"], row["defensive_rating_adjusted"]),
+                fontsize=8,
+            )
+
+        off_mean = frame["offensive_rating_adjusted"].mean()
+        def_mean = frame["defensive_rating_adjusted"].mean()
+
+        ymin, ymax = plt.ylim()
+
+        # Important: call xlim() once so it doesn't change between calls
+        xmin, xmax = plt.xlim()
+
+        plt.fill_between(
+            x=[off_threshold, xmax],
+            y1=def_threshold,
+            y2=ymin,
+            color="green",
+            alpha=0.25,
+        )
+
+        plt.text(
+            (off_threshold + xmax) / 2,
+            (def_threshold + ymin) / 2,
+            "Elite Region",
+            fontsize=10,
+            fontweight="bold",
+            ha="center",
+            va="center",
+        )
+
+        plt.axvline(x=off_mean, color="red", linestyle="--")
+        plt.axhline(y=def_mean, color="red", linestyle="--")
+
+        plt.text(
+            off_mean, plt.ylim()[1],
+            f"{round(off_mean, 3)} ",
+            color="red",
+            va="bottom",
+            ha="right",
+            fontsize=8,
+        )
+
+        plt.text(
+            plt.xlim()[0], def_mean,
+            f"\n {round(def_mean, 3)}",
+            color="red",
+            va="top",
+            ha="left",
+            fontsize=8,
+        )
+
+        plt.xlabel("Offensive Rating Adjusted")
+        plt.ylabel("Defensive Rating Adjusted")
+        plt.title("Top 68 Teams by Madness Rating: Offensive vs Defensive Efficiency")
+        plt.grid(True)
+        plt.gca().invert_yaxis()
+
+        # Render to bytes
+        buf = io.BytesIO()
+        fig.tight_layout()
+        fig.savefig(buf, format="png", dpi=150)
+        plt.close(fig)
+        buf.seek(0)
+
+        return Response(buf.getvalue(), mimetype="image/png")
+    except Exception as e:
+        logging.debug(f"An error occured: {e}")
 
 if __name__ == '__main__':
     # app.run(debug=True)
