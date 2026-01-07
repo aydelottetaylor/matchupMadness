@@ -2,11 +2,7 @@ import mysql.connector
 import logging
 import os
 import base64
-import io
 import joblib
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from flask_cors import CORS
@@ -48,6 +44,11 @@ def team_stats_ratings():
 @app.route('/player_stats_ratings')
 def player_stats_ratings():
     return render_template('player_stats_ratings.html', current_page='player_stats_ratings')
+
+
+@app.route('/plotly')
+def plotly():
+    return render_template('plotly.html', current_page='plotly')
 
 
 @app.route('/matchup_maker')
@@ -615,109 +616,85 @@ def get_matchup_data():
         return jsonify({}), 500
     
 
-@app.route('/api/create_top_68.png')
-def create_top_68():
+@app.route('/api/get_averages_for_net')
+def get_net_averages():
     try:
         conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        sql = f"""
-            SELECT team_name,
-                   offensive_rating_adjusted,
-                   defensive_rating_adjusted,
-                   net_rating_adjusted
-            FROM team
-            ORDER BY madness_rating DESC
-            LIMIT 68
-        """
+        cursor = conn.cursor(dictionary=True)
+        sql = """
+                SELECT
+                    AVG(offensive_rating_adjusted) AS aoff,
+                    AVG(defensive_rating_adjusted) AS adef
+                FROM team
+            """
+        cursor.execute(sql)
+        averages = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        return jsonify(averages)
+        
+    except Exception as e:
+        logging.debug(f"An error occured: {e}")
+    
+
+@app.route('/api/fetch_top_68')
+def create_top_68():
+    how = request.args.get('how')
+    # print(how)
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        if how == "Top 68 Teams By Madness Rating":
+            sql = """
+                SELECT team_name,
+                    offensive_rating_adjusted,
+                    defensive_rating_adjusted,
+                    net_rating_adjusted,
+                    madness_rating
+                FROM team
+                ORDER BY madness_rating DESC
+                LIMIT 68
+            """
+        elif how == "Top 68 Teams By Net Rating":
+            sql = """
+                SELECT team_name,
+                    offensive_rating_adjusted,
+                    defensive_rating_adjusted,
+                    net_rating_adjusted,
+                    madness_rating
+                FROM team
+                ORDER BY net_rating_adjusted DESC
+                LIMIT 68
+            """
+        elif how == "All Teams":
+            sql = """
+                SELECT team_name,
+                    offensive_rating_adjusted,
+                    defensive_rating_adjusted,
+                    net_rating_adjusted,
+                    madness_rating
+                FROM team
+            """
+        else:
+            sql = f"""
+                SELECT team_name,
+                    offensive_rating_adjusted,
+                    defensive_rating_adjusted,
+                    net_rating_adjusted,
+                    madness_rating
+                FROM team t
+                JOIN conference c on c.conference_id = t.conference_id
+                WHERE c.conference_abbreviation = '{how}'
+                ORDER BY net_rating_adjusted DESC
+                LIMIT 68
+            """
         cursor.execute(sql)
         teams = cursor.fetchall()
         cursor.close()
         conn.close()
 
-        frame = pd.DataFrame(
-            teams,
-            columns=[
-                'team_name',
-                'offensive_rating_adjusted',
-                'defensive_rating_adjusted',
-                'net_rating_adjusted'
-            ],
-        )
-        
-        off_threshold = 121
-        def_threshold = 89
-
-        fig = plt.figure(figsize=(16, 10))
-        plt.scatter(frame["offensive_rating_adjusted"], frame["defensive_rating_adjusted"])
-
-        for _, row in frame.iterrows():
-            plt.annotate(
-                row["team_name"],
-                (row["offensive_rating_adjusted"], row["defensive_rating_adjusted"]),
-                fontsize=8,
-            )
-
-        off_mean = frame["offensive_rating_adjusted"].mean()
-        def_mean = frame["defensive_rating_adjusted"].mean()
-
-        ymin, ymax = plt.ylim()
-
-        # Important: call xlim() once so it doesn't change between calls
-        xmin, xmax = plt.xlim()
-
-        plt.fill_between(
-            x=[off_threshold, xmax],
-            y1=def_threshold,
-            y2=ymin,
-            color="green",
-            alpha=0.25,
-        )
-
-        plt.text(
-            (off_threshold + xmax) / 2,
-            (def_threshold + ymin) / 2,
-            "Elite Region",
-            fontsize=10,
-            fontweight="bold",
-            ha="center",
-            va="center",
-        )
-
-        plt.axvline(x=off_mean, color="red", linestyle="--")
-        plt.axhline(y=def_mean, color="red", linestyle="--")
-
-        plt.text(
-            off_mean, plt.ylim()[1],
-            f"{round(off_mean, 3)} ",
-            color="red",
-            va="bottom",
-            ha="right",
-            fontsize=8,
-        )
-
-        plt.text(
-            plt.xlim()[0], def_mean,
-            f"\n {round(def_mean, 3)}",
-            color="red",
-            va="top",
-            ha="left",
-            fontsize=8,
-        )
-
-        plt.xlabel("Offensive Rating Adjusted")
-        plt.ylabel("Defensive Rating Adjusted")
-        plt.title("Top 68 Teams by Madness Rating: Offensive vs Defensive Efficiency")
-        plt.grid(True)
-        plt.gca().invert_yaxis()
-
-        # Render to bytes
-        buf = io.BytesIO()
-        fig.tight_layout()
-        fig.savefig(buf, format="png", dpi=150)
-        plt.close(fig)
-        buf.seek(0)
-
-        return Response(buf.getvalue(), mimetype="image/png")
+        return jsonify(teams)
     except Exception as e:
         logging.debug(f"An error occured: {e}")
 
