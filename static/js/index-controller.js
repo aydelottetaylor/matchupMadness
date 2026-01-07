@@ -6,9 +6,6 @@ let midMajors = {};
 let sortDirection = {};
 let lastColumn = -1;
 
-const img = document.getElementById('top68Chart')
-img.src = '/api/create_top_68.png?t=' + Date.now();
-
 async function fetchTop25Data() {
     await fetch('/api/top_25_data')
         .then(res => res.json())
@@ -359,6 +356,7 @@ function createTop25Table() {
     table.appendChild(tbody);
     container.appendChild(table);
 }
+
 
 async function initializePage() {
     await fetchTop25Data();
