@@ -1,4 +1,5 @@
 let how = 'Top 68 Teams By Madness Rating';
+let renderToken = 0;
 
 const howSelect = document.getElementById("howSelect");
 const logoCache = new Map();
@@ -226,7 +227,6 @@ function makeTransparentLogo(source) {
 
 howSelect.addEventListener("change", e => {
     how = e.target.value;
-    console.log("how changed to:", how);
 
     renderChart();
 });
@@ -246,19 +246,24 @@ async function renderChart() {
         return;
     }
 
+    const token = ++renderToken;
     let rows;
     let averages;
     try {
-        const res = await fetch(`/api/fetch_top_68?how=${encodeURIComponent(how)}`, { cache: "no-store" });
-        const avs = await fetch('/api/get_averages_for_net', { cache: "no-store" })
-        rows = await res.json();
-        averages = await avs.json();
+        const [rowsResponse, averagesResponse] = await Promise.all([
+            fetch(`/api/fetch_top_68?how=${encodeURIComponent(how)}`, { cache: "no-store" }),
+            fetch('/api/get_averages_for_net', { cache: "no-store" })
+        ]);
+        rows = await rowsResponse.json();
+        averages = await averagesResponse.json();
         // console.log("rows length:", rows?.length, "sample:", rows?.[0]);
     } catch (e) {
         console.error("Fetch/JSON failed:", e);
         return;
     }
-    console.log(averages);
+    if (token !== renderToken) {
+        return;
+    }
 
     if (!Array.isArray(rows) || rows.length === 0) {
         console.error("No rows returned from API:", rows);
@@ -332,6 +337,9 @@ async function renderChart() {
     const transparentLogos = await Promise.all(
         logoSources.map((source) => makeTransparentLogo(source))
     );
+    if (token !== renderToken) {
+        return;
+    }
 
     const logoImages = x.map((xVal, index) => {
         const source = transparentLogos[index];
@@ -355,7 +363,6 @@ async function renderChart() {
     }).filter(Boolean);
 
     let layout = {};
-    console.log(how);
     if (how != 'All Teams') {
         layout = {
             title: how + ": Offensive vs Defensive Efficiency",
@@ -471,7 +478,12 @@ async function renderChart() {
     }
 
     layout.images = logoImages;
-    Plotly.newPlot(chartDiv, [trace], layout, { scrollZoom: true, responsive: true });
+    const plotConfig = { scrollZoom: true, responsive: true };
+    if (chartDiv.data) {
+        Plotly.react(chartDiv, [trace], layout, plotConfig);
+    } else {
+        Plotly.newPlot(chartDiv, [trace], layout, plotConfig);
+    }
 }
 
 

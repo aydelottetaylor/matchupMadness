@@ -2,6 +2,7 @@ import mysql.connector
 import logging
 import os
 import base64
+import time
 import joblib
 import pandas as pd
 
@@ -12,6 +13,8 @@ from flask import Flask, jsonify, render_template, request, send_from_directory,
 log_path = os.path.join(os.path.dirname(__file__), 'backend/backend_log.txt')
 model_path = os.path.join(os.path.dirname(__file__), 'model_1_0.pkl')
 MODEL = joblib.load(model_path)
+STAT_RANKS_CACHE = {"data": None, "timestamp": 0.0}
+STAT_RANKS_TTL_SECONDS = 300
 
 logging.basicConfig(
     filename=log_path,
@@ -594,28 +597,14 @@ def get_matchup_data():
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
-        
-        def get_team_data(team_name):
-            """Fetch a team row and attach a base64 logo."""
-            cursor.execute("""
-                SELECT t.*, l.logo_binary
-                FROM team t
-                LEFT JOIN logos l ON t.team_id = l.team_id
-                WHERE t.team_name = %s
-            """, (team_name,))
-            team = cursor.fetchone()
-            if team and team["logo_binary"]:
-                # Convert binary logo to base64 string
-                team["logo_base64"] = base64.b64encode(team["logo_binary"]).decode("utf-8")
-            else:
-                team["logo_base64"] = None
-                
-            if "logo_binary" in team:
-                del team["logo_binary"]
-            return team
-        
+
         def get_stat_ranks():
-            """Build per-team stat ranking dictionaries."""
+            """Build per-team stat ranking dictionaries with a short-lived cache."""
+            now = time.time()
+            cached = STAT_RANKS_CACHE["data"]
+            if cached and (now - STAT_RANKS_CACHE["timestamp"]) < STAT_RANKS_TTL_SECONDS:
+                return cached
+
             cursor.execute("SELECT * FROM team")
             teams = cursor.fetchall()
 
@@ -665,10 +654,32 @@ def get_matchup_data():
                         rankings[tid][stat] = rank
                         prev_value = value
 
+            STAT_RANKS_CACHE["data"] = rankings
+            STAT_RANKS_CACHE["timestamp"] = now
             return rankings
-        
-        team1_data = get_team_data(team1)
-        team2_data = get_team_data(team2)
+
+        cursor.execute("""
+            SELECT t.*, l.logo_binary
+            FROM team t
+            LEFT JOIN logos l ON t.team_id = l.team_id
+            WHERE t.team_name IN (%s, %s)
+        """, (team1, team2))
+        team_rows = cursor.fetchall()
+        team_map = {}
+        for team in team_rows:
+            if team.get("logo_binary"):
+                team["logo_base64"] = base64.b64encode(team["logo_binary"]).decode("utf-8")
+            else:
+                team["logo_base64"] = None
+            team.pop("logo_binary", None)
+            team_map[team["team_name"]] = team
+
+        team1_data = team_map.get(team1)
+        team2_data = team_map.get(team2)
+        if not team1_data or not team2_data:
+            cursor.close()
+            conn.close()
+            return jsonify({}), 404
         
         rankings = get_stat_ranks()
         team1_data["stat_ranks"] = rankings.get(team1_data["team_id"], {})

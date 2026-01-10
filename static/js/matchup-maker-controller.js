@@ -2,7 +2,7 @@ let teams = {}
 let teamList = [];
 let team1_prob = 0;
 let team2_prob = 0;
-let first = 0;
+let matchupRequestToken = 0;
 const logoCache = new Map();
 const LOGO_WHITE_THRESHOLD = 245;
 const LOGO_CACHE_KEY = "mm_logo_cache_v1";
@@ -275,7 +275,7 @@ function renderTeamOptions(dropdown, query) {
 }
 
 /** Wire up a searchable dropdown input and selection behavior. */
-function setupSearchableDropdown(searchInput, dropdown, selectElement) {
+function setupSearchableDropdown(searchInput, dropdown, selectElement, clearButton) {
     const wrapper = searchInput.closest('.team-search-wrapper');
 
     const openDropdown = () => {
@@ -306,6 +306,15 @@ function setupSearchableDropdown(searchInput, dropdown, selectElement) {
         }
     });
 
+    if (clearButton) {
+        clearButton.addEventListener('click', () => {
+            searchInput.value = '';
+            renderTeamOptions(dropdown, '');
+            dropdown.classList.add('is-open');
+            searchInput.focus();
+        });
+    }
+
     dropdown.addEventListener('mousedown', (event) => {
         const option = event.target.closest('.team-option');
         if (!option || option.classList.contains('is-empty')) {
@@ -327,12 +336,6 @@ async function handleTeamChange() {
     const team2 = document.getElementById('team2-select').value;
 
     if (team1 != ' - Select A Team - ' && team2 != ' - Select A Team - ' && team1 !== team2) {
-        if (first != 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        } else {
-            first = 1;
-        }
-
         compareTeams();
     }
 }
@@ -345,6 +348,8 @@ function fetchAndAddTeams() {
     const team2Search = document.getElementById('team2-search');
     const team1Dropdown = document.getElementById('team1-dropdown');
     const team2Dropdown = document.getElementById('team2-dropdown');
+    const team1Clear = document.getElementById('team1-clear');
+    const team2Clear = document.getElementById('team2-clear');
     const selectOption1 = new Option(' - Select A Team - ', ' - Select A Team - ');
     const selectOption2 = new Option(' - Select A Team - ', ' - Select A Team - ');
     team1Select.add(selectOption1);
@@ -353,8 +358,8 @@ function fetchAndAddTeams() {
     team1Select.addEventListener("change", handleTeamChange);
     team2Select.addEventListener("change", handleTeamChange);
 
-    setupSearchableDropdown(team1Search, team1Dropdown, team1Select);
-    setupSearchableDropdown(team2Search, team2Dropdown, team2Select);
+    setupSearchableDropdown(team1Search, team1Dropdown, team1Select, team1Clear);
+    setupSearchableDropdown(team2Search, team2Dropdown, team2Select, team2Clear);
 
     fetch('/api/get_team_list')
         .then(res => res.json())
@@ -378,6 +383,7 @@ function fetchAndAddTeams() {
 async function compareTeams() {
     const team1 = document.getElementById('team1-select').value;
     const team2 = document.getElementById('team2-select').value;
+    const requestToken = ++matchupRequestToken;
 
     const container = document.getElementById('matchup-result');
     container.innerHTML = '<div id="loading-spinner" class="spinner" style="display: none;"></div>';
@@ -389,11 +395,26 @@ async function compareTeams() {
         return;
     }
 
+    const probsPromise = getProbs(team1, team2);
+
     fetch(`/api/matchup?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`)
         .then(res => res.json())
         .then(data => {
+            if (requestToken !== matchupRequestToken) {
+                return;
+            }
             spinner.style.display = 'none';
             renderMatchup(data.team1, data.team2);
+            probsPromise
+                .then((probs) => {
+                    if (requestToken !== matchupRequestToken) {
+                        return;
+                    }
+                    if (probs) {
+                        renderGauges(data.team1, data.team2, probs);
+                    }
+                })
+                .catch(() => {});
         });
 }
 
@@ -697,22 +718,36 @@ function renderMatchup(team1, team2) {
     container.appendChild(expl);
     container.appendChild(disclaimer);
 
-    renderGauges(team1, team2);
 }
 
 /** Fetch both home-team probabilities for the matchup. */
 async function getProbs(team1, team2) {
-    await fetch(`/api/generateMatchupProbs?team1=${encodeURIComponent(team1['team_name'])}&team2=${encodeURIComponent(team2['team_name'])}`)
-        .then(res => res.json())
-        .then(data => {
-            team1_prob = data.team1_prob;
-            team2_prob = data.team2_prob;
-        });
+    const response = await fetch(`/api/generateMatchupProbs?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+    if (!response.ok) {
+        return null;
+    }
+    return response.json();
 }
 
 /** Render probability gauges and explanatory text. */
-async function renderGauges(team1, team2) {
-    await getProbs(team1, team2);
+async function renderGauges(team1, team2, probs, attempt = 0) {
+    let resolved = probs;
+    if (!resolved) {
+        resolved = await getProbs(team1.team_name, team2.team_name);
+    }
+    if (!resolved) {
+        return;
+    }
+
+    if (typeof Donut === "undefined") {
+        if (attempt < 5) {
+            setTimeout(() => renderGauges(team1, team2, resolved, attempt + 1), 150);
+        }
+        return;
+    }
+
+    team1_prob = resolved.team1_prob;
+    team2_prob = resolved.team2_prob;
 
     const opts = {
         lines: 1, // The number of lines to draw
