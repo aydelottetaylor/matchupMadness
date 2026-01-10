@@ -446,16 +446,11 @@ function renderMatchup(team1, team2) {
 }
 
 async function getProbs(team1, team2) {
-    await fetch(`/api/generateProbs?team1=${encodeURIComponent(team1['team_name'])}&team2=${encodeURIComponent(team2['team_name'])}`)
-    .then(res => res.json())
-    .then(data => {
-        team1_prob = data;
-    });
-
-    await fetch(`/api/generateProbs?team1=${encodeURIComponent(team2['team_name'])}&team2=${encodeURIComponent(team1['team_name'])}`)
+    await fetch(`/api/generateMatchupProbs?team1=${encodeURIComponent(team1['team_name'])}&team2=${encodeURIComponent(team2['team_name'])}`)
         .then(res => res.json())
         .then(data => {
-            team2_prob = data;
+            team1_prob = data.team1_prob;
+            team2_prob = data.team2_prob;
         });
 }
 
