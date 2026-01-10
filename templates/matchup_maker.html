@@ -10,12 +10,26 @@
 
     <main>
         <h1 class="page-header">Create Your Matchup</h1>
-        <h4 style="color: #102b40; font-family:Arial, Helvetica, sans-serif;">Select Different Teams To Compare</h4>
+        <h4 class="page-subtitle">Select Different Teams To Compare</h4>
 
         <div class="matchup-selector">
-            <select id="team1-select" class= "team-selector"></select>
-            <span style="margin: 0 20px;" class="page-header" style='font-size: 1rem;'>vs</span>
-            <select id="team2-select" class= "team-selector"></select>
+            <div class="team-select-group">
+                <label class="dropdown-desc" for="team1-search">Team 1</label>
+                <div class="team-search-wrapper">
+                    <input id="team1-search" class="team-search" type="text" placeholder="Search teams" autocomplete="off">
+                    <div id="team1-dropdown" class="team-dropdown"></div>
+                </div>
+                <select id="team1-select" class="team-selector is-hidden"></select>
+            </div>
+            <span class="matchup-divider">vs</span>
+            <div class="team-select-group">
+                <label class="dropdown-desc" for="team2-search">Team 2</label>
+                <div class="team-search-wrapper">
+                    <input id="team2-search" class="team-search" type="text" placeholder="Search teams" autocomplete="off">
+                    <div id="team2-dropdown" class="team-dropdown"></div>
+                </div>
+                <select id="team2-select" class="team-selector is-hidden"></select>
+            </div>
         </div>
         
         <div id="matchup-result"></div>

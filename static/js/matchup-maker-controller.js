@@ -1,7 +1,78 @@
 let teams = {}
+let teamNamesList = [];
 let team1_prob = 0;
 let team2_prob = 0;
 let first = 0;
+
+function renderTeamOptions(dropdown, query) {
+    const normalizedQuery = query.trim().toLowerCase();
+    dropdown.innerHTML = '';
+
+    const matches = teamNamesList.filter(name => name.toLowerCase().includes(normalizedQuery));
+
+    if (matches.length === 0) {
+        const empty = document.createElement('div');
+        empty.classList.add('team-option', 'is-empty');
+        empty.textContent = 'No matches';
+        dropdown.appendChild(empty);
+        return;
+    }
+
+    matches.forEach(name => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.classList.add('team-option');
+        option.dataset.value = name;
+        option.textContent = name;
+        dropdown.appendChild(option);
+    });
+}
+
+function setupSearchableDropdown(searchInput, dropdown, selectElement) {
+    const wrapper = searchInput.closest('.team-search-wrapper');
+
+    const openDropdown = () => {
+        renderTeamOptions(dropdown, searchInput.value);
+        dropdown.classList.add('is-open');
+    };
+
+    const selectTeam = (name) => {
+        if (!name) {
+            return;
+        }
+        searchInput.value = name;
+        selectElement.value = name;
+        dropdown.classList.remove('is-open');
+        handleTeamChange();
+    };
+
+    searchInput.addEventListener('focus', openDropdown);
+    searchInput.addEventListener('input', openDropdown);
+
+    searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            const firstOption = dropdown.querySelector('.team-option:not(.is-empty)');
+            if (firstOption) {
+                event.preventDefault();
+                selectTeam(firstOption.dataset.value);
+            }
+        }
+    });
+
+    dropdown.addEventListener('mousedown', (event) => {
+        const option = event.target.closest('.team-option');
+        if (!option || option.classList.contains('is-empty')) {
+            return;
+        }
+        selectTeam(option.dataset.value);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!wrapper.contains(event.target)) {
+            dropdown.classList.remove('is-open');
+        }
+    });
+}
 
 async function handleTeamChange() {
     const team1 = document.getElementById('team1-select').value;
@@ -21,6 +92,10 @@ async function handleTeamChange() {
 function fetchAndAddTeams() {
     const team1Select = document.getElementById('team1-select');
     const team2Select = document.getElementById('team2-select');
+    const team1Search = document.getElementById('team1-search');
+    const team2Search = document.getElementById('team2-search');
+    const team1Dropdown = document.getElementById('team1-dropdown');
+    const team2Dropdown = document.getElementById('team2-dropdown');
     const selectOption1 = new Option(' - Select A Team - ', ' - Select A Team - ');
     const selectOption2 = new Option(' - Select A Team - ', ' - Select A Team - ');
     team1Select.add(selectOption1);
@@ -29,16 +104,20 @@ function fetchAndAddTeams() {
     team1Select.addEventListener("change", handleTeamChange);
     team2Select.addEventListener("change", handleTeamChange);
 
+    setupSearchableDropdown(team1Search, team1Dropdown, team1Select);
+    setupSearchableDropdown(team2Search, team2Dropdown, team2Select);
+
     fetch('/api/get_team_names')
         .then(res => res.json())
         .then(teamNames => {
             teams = teamNames;
-            teamNames.forEach(name => {
-                const opt1 = new Option(name[0], name[0]);
-                const opt2 = new Option(name[0], name[0]);
-                team1Select.add(opt1);
-                team2Select.add(opt2);
+            teamNamesList = teamNames.map(name => name[0]);
+            teamNamesList.forEach(name => {
+                team1Select.add(new Option(name, name));
+                team2Select.add(new Option(name, name));
             });
+            renderTeamOptions(team1Dropdown, '');
+            renderTeamOptions(team2Dropdown, '');
         });
 }
 
@@ -267,12 +346,12 @@ function renderMatchup(team1, team2) {
         if (typeof val1 === 'number' && typeof val2 === 'number') {
             if(key != 'games') {
                 if (val1 > val2) {
-                    cell1.style.background = '#56d91069';
-                    cell2.style.background = '#c91d0669';
+                    cell1.style.background = 'var(--good)';
+                    cell2.style.background = 'var(--bad)';
                 }
                 else if (val2 > val1) {
-                    cell1.style.background = '#c91d0669';
-                    cell2.style.background = '#56d91069';
+                    cell1.style.background = 'var(--bad)';
+                    cell2.style.background = 'var(--good)';
                 }
             }
         }
