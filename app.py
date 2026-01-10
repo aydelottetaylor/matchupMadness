@@ -716,44 +716,52 @@ def create_top_68():
         cursor = conn.cursor(dictionary=True)
         if how == "Top 68 Teams By Madness Rating":
             sql = """
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
-                FROM team
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
+                FROM team t
+                LEFT JOIN logos l ON t.team_id = l.team_id
                 ORDER BY madness_rating DESC
                 LIMIT 68
             """
         elif how == "Top 68 Teams By Net Rating":
             sql = """
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
-                FROM team
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
+                FROM team t
+                LEFT JOIN logos l ON t.team_id = l.team_id
                 ORDER BY net_rating_adjusted DESC
                 LIMIT 68
             """
         elif how == "All Teams":
             sql = """
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
-                FROM team
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
+                FROM team t
+                LEFT JOIN logos l ON t.team_id = l.team_id
             """
         else:
             sql = f"""
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
                 FROM team t
                 JOIN conference c on c.conference_id = t.conference_id
+                LEFT JOIN logos l ON t.team_id = l.team_id
                 WHERE c.conference_abbreviation = '{how}'
                 ORDER BY net_rating_adjusted DESC
                 LIMIT 68
@@ -762,6 +770,14 @@ def create_top_68():
         teams = cursor.fetchall()
         cursor.close()
         conn.close()
+
+        for team in teams:
+            logo_binary = team.get("logo_binary")
+            if logo_binary:
+                team["logo_base64"] = base64.b64encode(logo_binary).decode("utf-8")
+            else:
+                team["logo_base64"] = None
+            team.pop("logo_binary", None)
 
         return jsonify(teams)
     except Exception as e:

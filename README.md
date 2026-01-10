@@ -6,7 +6,7 @@ Matchup Madness is a Flask web app for comparing NCAA basketball teams, explorin
 - Home dashboard with AP Top 25, Madness Rankings, and tiered team tables.
 - Team stats and advanced ratings tables with conference filters.
 - Matchup Maker with searchable team inputs, side-by-side comparison, and win probability gauges.
-- Plotly chart view to explore top teams or conferences.
+- Plotly chart view to explore top teams or conferences with team logos.
 - REST endpoints for data retrieval and model inference.
 
 ## Pages
@@ -103,7 +103,7 @@ All endpoints return JSON. Parameters are provided as query strings.
 - `/api/get_averages_for_net`
   Returns average offensive and defensive ratings used for net comparisons.
 - `/api/fetch_top_68?how=<mode-or-conference>`
-  Returns top-68 teams for Plotly.
+  Returns top-68 teams for Plotly (includes `logo_base64` for logo rendering).
   Accepted `how` values:
   - `Top 68 Teams By Madness Rating`
   - `Top 68 Teams By Net Rating`
