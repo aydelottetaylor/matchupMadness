@@ -9,6 +9,7 @@ howSelect.addEventListener("change", e => {
     renderChart();
 });
 
+/** Fetch data and render the Plotly chart for the current filter. */
 async function renderChart() {
     /*
     * Create plotly chart ORtg vs DRtg that is interactive
@@ -218,6 +219,7 @@ async function renderChart() {
 }
 
 
+/** Initialize the Plotly page on load. */
 async function initializePage() {
     renderChart();
 }

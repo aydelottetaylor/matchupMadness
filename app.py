@@ -29,6 +29,7 @@ CORS(app)
 
 
 def build_matchup_features(team_home, team_away):
+    """Build the model input feature dict for a home vs away matchup."""
     return {
         'sos_diff': team_home['strength_of_schedule'] - team_away['strength_of_schedule'],
         'net_diff': team_home['net_rating_adjusted'] - team_away['net_rating_adjusted'],
@@ -68,36 +69,43 @@ def build_matchup_features(team_home, team_away):
 
 @app.route('/')
 def index():
+    """Render the home dashboard."""
     return render_template('index.html', current_page='home')
 
 
 @app.route('/favicon.ico')
 def favicon():
+    """Serve the favicon for the site."""
     return send_from_directory('static', 'img/favicon.ico')
 
 
 @app.route('/team_stats_ratings')
 def team_stats_ratings():
+    """Render the team stats and ratings page."""
     return render_template('team_stats_ratings.html', current_page='team_stats_ratings')
 
 
 @app.route('/player_stats_ratings')
 def player_stats_ratings():
+    """Render the player stats page."""
     return render_template('player_stats_ratings.html', current_page='player_stats_ratings')
 
 
 @app.route('/plotly')
 def plotly():
+    """Render the Plotly chart page."""
     return render_template('plotly.html', current_page='plotly')
 
 
 @app.route('/matchup_maker')
 def matchup_maker():
+    """Render the matchup maker page."""
     return render_template('matchup_maker.html', current_page='matchup_maker')
 
 
 @app.route('/api/top_25_data')
 def get_top_25_data():
+    """Return AP Top 25 rows with basic record and conference data."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -123,6 +131,7 @@ def get_top_25_data():
 
 @app.route('/api/generateMadnessRtg')
 def generate_madness_ratings():
+    """Return Madness Ratings for all teams with ranks and conferences."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -147,6 +156,7 @@ def generate_madness_ratings():
     
 @app.route('/api/get_player_stats')
 def get_player_stats():
+    """Return player rows joined with team and conference context."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -190,6 +200,7 @@ def get_player_stats():
 
 @app.route('/api/get_team_stats')
 def get_stats():
+    """Return raw team stats plus a conference id map."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -245,6 +256,7 @@ def get_stats():
   
 @app.route('/api/get_contenders')
 def get_contenders():
+    """Return the Championship Contenders list derived from multiple filters."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -295,6 +307,7 @@ def get_contenders():
 
 @app.route('/api/get_next_up')
 def get_next_up():
+    """Return the Next Up tier with broader thresholds than contenders."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -369,6 +382,7 @@ def get_next_up():
 
 @app.route('/api/get_best_mid_majors')      
 def get_best_mid_majors():
+    """Return top mid-major teams excluding power conferences."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -425,6 +439,7 @@ def get_best_mid_majors():
         
 @app.route('/api/get_team_ratings')
 def get_ratings():
+    """Return advanced team ratings and efficiency metrics."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -470,6 +485,7 @@ def get_ratings():
         
 @app.route('/api/get_team_names')
 def get_team_names():
+    """Return alphabetized team names for selectors."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
@@ -489,6 +505,7 @@ def get_team_names():
 
 @app.route('/api/generateProbs')
 def generate_probs():
+    """Return a single home-team win probability for a matchup."""
     team1_name = request.args.get('team1')
     team2_name = request.args.get('team2')
 
@@ -526,6 +543,7 @@ def generate_probs():
 
 @app.route('/api/generateMatchupProbs')
 def generate_matchup_probs():
+    """Return both home-team win probabilities for a matchup."""
     team1_name = request.args.get('team1')
     team2_name = request.args.get('team2')
 
@@ -569,6 +587,7 @@ def generate_matchup_probs():
 
 @app.route('/api/matchup')
 def get_matchup_data():
+    """Return matchup data, logos, and stat ranks for two teams."""
     team1 = request.args.get('team1')
     team2 = request.args.get('team2')
 
@@ -577,6 +596,7 @@ def get_matchup_data():
         cursor = conn.cursor(dictionary=True)
         
         def get_team_data(team_name):
+            """Fetch a team row and attach a base64 logo."""
             cursor.execute("""
                 SELECT t.*, l.logo_binary
                 FROM team t
@@ -595,6 +615,7 @@ def get_matchup_data():
             return team
         
         def get_stat_ranks():
+            """Build per-team stat ranking dictionaries."""
             cursor.execute("SELECT * FROM team")
             teams = cursor.fetchall()
 
@@ -664,6 +685,7 @@ def get_matchup_data():
 
 @app.route('/api/get_averages_for_net')
 def get_net_averages():
+    """Return average offensive and defensive ratings."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
@@ -686,6 +708,7 @@ def get_net_averages():
 
 @app.route('/api/fetch_top_68')
 def create_top_68():
+    """Return the top 68 teams for the Plotly chart filter."""
     how = request.args.get('how')
     # print(how)
     try:
