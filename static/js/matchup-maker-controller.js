@@ -4,6 +4,7 @@ let team1_prob = 0;
 let team2_prob = 0;
 let first = 0;
 
+/** Render filtered team options into a custom dropdown list. */
 function renderTeamOptions(dropdown, query) {
     const normalizedQuery = query.trim().toLowerCase();
     dropdown.innerHTML = '';
@@ -28,6 +29,7 @@ function renderTeamOptions(dropdown, query) {
     });
 }
 
+/** Wire up a searchable dropdown input and selection behavior. */
 function setupSearchableDropdown(searchInput, dropdown, selectElement) {
     const wrapper = searchInput.closest('.team-search-wrapper');
 
@@ -74,6 +76,7 @@ function setupSearchableDropdown(searchInput, dropdown, selectElement) {
     });
 }
 
+/** Fetch matchup data when both teams are selected. */
 async function handleTeamChange() {
     const team1 = document.getElementById('team1-select').value;
     const team2 = document.getElementById('team2-select').value;
@@ -89,6 +92,7 @@ async function handleTeamChange() {
     }
 }
 
+/** Populate team selectors and initialize searchable dropdowns. */
 function fetchAndAddTeams() {
     const team1Select = document.getElementById('team1-select');
     const team2Select = document.getElementById('team2-select');
@@ -121,6 +125,7 @@ function fetchAndAddTeams() {
         });
 }
 
+/** Request matchup data for the selected teams and render it. */
 async function compareTeams() {
     const team1 = document.getElementById('team1-select').value;
     const team2 = document.getElementById('team2-select').value;
@@ -143,6 +148,7 @@ async function compareTeams() {
         });
 }
 
+/** Build the matchup comparison layout and stats table. */
 function renderMatchup(team1, team2) {
     const container = document.getElementById('matchup-result');
     container.innerHTML = '';  // clear previous
@@ -445,20 +451,17 @@ function renderMatchup(team1, team2) {
     renderGauges(team1, team2);
 }
 
+/** Fetch both home-team probabilities for the matchup. */
 async function getProbs(team1, team2) {
-    await fetch(`/api/generateProbs?team1=${encodeURIComponent(team1['team_name'])}&team2=${encodeURIComponent(team2['team_name'])}`)
-    .then(res => res.json())
-    .then(data => {
-        team1_prob = data;
-    });
-
-    await fetch(`/api/generateProbs?team1=${encodeURIComponent(team2['team_name'])}&team2=${encodeURIComponent(team1['team_name'])}`)
+    await fetch(`/api/generateMatchupProbs?team1=${encodeURIComponent(team1['team_name'])}&team2=${encodeURIComponent(team2['team_name'])}`)
         .then(res => res.json())
         .then(data => {
-            team2_prob = data;
+            team1_prob = data.team1_prob;
+            team2_prob = data.team2_prob;
         });
 }
 
+/** Render probability gauges and explanatory text. */
 async function renderGauges(team1, team2) {
     await getProbs(team1, team2);
 
@@ -509,6 +512,7 @@ async function renderGauges(team1, team2) {
     rightDescription.innerHTML += ' wins as the HOME team in this matchup.*';
 }
 
+/** Format stat values based on the stat key. */
 function formatStat(val, key) {
     const three = [
         'win_percentage',

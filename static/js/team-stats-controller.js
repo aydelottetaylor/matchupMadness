@@ -10,6 +10,7 @@ const statsButton = document.getElementById('team-stats-button');
 const ratingsButton = document.getElementById('team-ratings-button');
 const confDropdown = document.getElementById('conferences-dropdown');
 
+/** Fetch base team stats and conference mappings. */
 async function fetchStatsData() {
     await fetch(`/api/get_team_stats`)
         .then(res => res.json())
@@ -22,6 +23,7 @@ async function fetchStatsData() {
         });
 }
 
+/** Fetch advanced ratings data for teams. */
 async function fetchRatingsData() {
     await fetch(`/api/get_team_ratings`)
         .then(res => res.json())
@@ -33,6 +35,7 @@ async function fetchRatingsData() {
         });
 }
 
+/** Build the stats or ratings table based on the selected type. */
 async function buildTable(type) {
     currentTable = type;
     const container = document.getElementById('data-list');
@@ -133,6 +136,7 @@ async function buildTable(type) {
     buildTableBody(table, type);
 }
 
+/** Populate the table body and apply conference filtering. */
 function buildTableBody(table, type) {
     const oldTbody = table.querySelector('tbody');
     if (oldTbody) table.removeChild(oldTbody);
@@ -163,6 +167,7 @@ function buildTableBody(table, type) {
     table.appendChild(tbody);
 }
 
+/** Format cell values for display based on column/type rules. */
 function formatCell(cell, index, type) {
     if (index === 1) {
         return conferences[cell] || 'Unknown';
@@ -183,6 +188,7 @@ function formatCell(cell, index, type) {
     return cell;
 }
 
+/** Sort the current table by column and re-render. */
 function sortByColumn(colIndex, type) {
     direction = sortDirection[colIndex] === 'asc' ? 'desc' : 'asc';
     sortDirection[colIndex] = direction;
@@ -258,6 +264,7 @@ confDropdown.addEventListener('change', () => {
     }
 });
 
+/** Initialize the team stats page data and default view. */
 async function init() {
     await fetchStatsData();
     await buildTable('stats');

@@ -6,6 +6,7 @@ let midMajors = {};
 let sortDirection = {};
 let lastColumn = -1;
 
+/** Sync the Madness Ratings scroll area to match the tallest side card. */
 function syncMadnessHeight() {
     const madnessContainer = document.getElementById('madness-rating');
     const madnessScroll = madnessContainer?.querySelector('.index-table-scroll-container');
@@ -40,6 +41,7 @@ function syncMadnessHeight() {
     }
 }
 
+/** Fetch AP Top 25 data for the home page. */
 async function fetchTop25Data() {
     await fetch('/api/top_25_data')
         .then(res => res.json())
@@ -51,6 +53,7 @@ async function fetchTop25Data() {
         });
 }
 
+/** Fetch Madness Ratings data for the home page. */
 async function fetchMadnessRatings() {
     await fetch('/api/generateMadnessRtg')
         .then(res => res.json())
@@ -62,6 +65,7 @@ async function fetchMadnessRatings() {
         });
 }
 
+/** Fetch contender, next-up, and mid-major team lists. */
 async function fetchContendersNextAndMid() {
     await fetch('/api/get_contenders')
         .then(res => res.json())
@@ -91,6 +95,7 @@ async function fetchContendersNextAndMid() {
         });
 }
 
+/** Render the Madness Rankings table with scroll container. */
 function createMadnessTable() {
     const container = document.getElementById('madness-rating');
     container.innerHTML = '';
@@ -155,6 +160,7 @@ function createMadnessTable() {
     requestAnimationFrame(syncMadnessHeight);
 }
 
+/** Sort Madness Ratings by column index and re-render. */
 function sortByColumn(colIndex) {
     direction = sortDirection[colIndex] === 'asc' ? 'desc' : 'asc';
     sortDirection[colIndex] = direction;
@@ -180,6 +186,7 @@ function sortByColumn(colIndex) {
     createMadnessTable();
 }
 
+/** Render contender, next-up, and mid-major sections. */
 function createTeamSection() {
     let headers = [
         'Team',
@@ -340,6 +347,7 @@ function createTeamSection() {
     requestAnimationFrame(syncMadnessHeight);
 }
 
+/** Render the AP Top 25 table. */
 function createTop25Table() {
     const container = document.getElementById('top-25-data');
     container.style.width = 'auto';
@@ -394,6 +402,7 @@ function createTop25Table() {
 }
 
 
+/** Load all data needed for the home page. */
 async function initializePage() {
     await fetchTop25Data();
     createTop25Table();

@@ -10,6 +10,7 @@ let teamFilter = 'None';
 const confDropdown = document.getElementById('conferences-dropdown');
 const teamDropdown = document.getElementById('team-dropdown');
 
+/** Fetch player stats data and render the table. */
 function fetchStatsData() {
     sortDirection = {};
     fetch(`/api/get_player_stats`)
@@ -23,6 +24,7 @@ function fetchStatsData() {
         });
 }
 
+/** Fetch team names and populate the team filter dropdown. */
 function fetchTeams() {
     fetch('/api/get_team_names')
         .then(res => res.json())
@@ -35,6 +37,7 @@ function fetchTeams() {
         });
 }
 
+/** Populate the team dropdown options from fetched team names. */
 function buildTeamDropdown() {
     const teamDropdown = document.getElementById('team-dropdown');
 
@@ -46,6 +49,7 @@ function buildTeamDropdown() {
     })
 }
 
+/** Build the player stats table and attach the scroll container. */
 function buildTable() {
     const container = document.getElementById('data-list');
     container.innerHTML = '';
@@ -99,6 +103,7 @@ function buildTable() {
     buildTableBody(table);
 }
 
+/** Render the table body, applying conference/team filters. */
 function buildTableBody(table) {
     const oldTbody = table.querySelector('tbody');
     if (oldTbody) table.removeChild(oldTbody);
@@ -128,6 +133,7 @@ function buildTableBody(table) {
     table.appendChild(tbody);
 }
 
+/** Format numeric cells based on column index. */
 function formatCell(cell, index) {
     if (cell == null) {
         return '';
@@ -144,6 +150,7 @@ function formatCell(cell, index) {
     return cell;
 }
 
+/** Sort table rows by column and rebuild the table. */
 function sortByColumn(colIndex) {
     direction = sortDirection[colIndex] === 'asc' ? 'desc' : 'asc';
     sortDirection[colIndex] = direction;
