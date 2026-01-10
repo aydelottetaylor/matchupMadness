@@ -6,6 +6,40 @@ let midMajors = {};
 let sortDirection = {};
 let lastColumn = -1;
 
+function syncMadnessHeight() {
+    const madnessContainer = document.getElementById('madness-rating');
+    const madnessScroll = madnessContainer?.querySelector('.index-table-scroll-container');
+    const topContainer = document.getElementById('top-25-data');
+    const teamsContainer = document.getElementById('teams');
+
+    if (!madnessContainer || !madnessScroll || !topContainer || !teamsContainer) {
+        return;
+    }
+
+    const topHeight = topContainer.getBoundingClientRect().height;
+    const teamsHeight = teamsContainer.getBoundingClientRect().height;
+    const targetHeight = Math.max(topHeight, teamsHeight);
+
+    if (!targetHeight) {
+        return;
+    }
+
+    const header = madnessContainer.querySelector('.table-header');
+    const headerStyle = header ? getComputedStyle(header) : null;
+    const headerHeight = header ? header.getBoundingClientRect().height : 0;
+    const headerMarginTop = headerStyle ? parseFloat(headerStyle.marginTop) || 0 : 0;
+    const headerMarginBottom = headerStyle ? parseFloat(headerStyle.marginBottom) || 0 : 0;
+
+    const containerStyle = getComputedStyle(madnessContainer);
+    const paddingTop = parseFloat(containerStyle.paddingTop) || 0;
+    const paddingBottom = parseFloat(containerStyle.paddingBottom) || 0;
+
+    const available = targetHeight - paddingTop - paddingBottom - headerHeight - headerMarginTop - headerMarginBottom;
+    if (available > 0) {
+        madnessScroll.style.height = `${Math.floor(available)}px`;
+    }
+}
+
 async function fetchTop25Data() {
     await fetch('/api/top_25_data')
         .then(res => res.json())
@@ -116,9 +150,9 @@ function createMadnessTable() {
     const scrollWrapper = document.createElement('div');
     scrollWrapper.classList.add('index-table-scroll-container');
     scrollWrapper.style.width = "100%";
-    scrollWrapper.style.height = "750px";
     scrollWrapper.appendChild(table);
     container.appendChild(scrollWrapper);
+    requestAnimationFrame(syncMadnessHeight);
 }
 
 function sortByColumn(colIndex) {
@@ -302,6 +336,8 @@ function createTeamSection() {
 
     midTable.appendChild(midBody);
     container.appendChild(midTable);
+
+    requestAnimationFrame(syncMadnessHeight);
 }
 
 function createTop25Table() {
@@ -371,3 +407,4 @@ async function initializePage() {
 
 
 window.addEventListener('DOMContentLoaded', initializePage);
+window.addEventListener('resize', syncMadnessHeight);
