@@ -3,6 +3,134 @@ let how = 'Top 68 Teams By Madness Rating';
 const howSelect = document.getElementById("howSelect");
 const logoCache = new Map();
 const LOGO_WHITE_THRESHOLD = 245;
+const LOGO_CACHE_KEY = "mm_logo_cache_v1";
+const LOGO_CACHE_DONE_KEY = "mm_logo_cache_complete_v1";
+let logoCacheStore = null;
+
+/** Create a stable hash for cache keys. */
+function hashLogoSource(source) {
+    let hash = 5381;
+    for (let i = 0; i < source.length; i += 1) {
+        hash = ((hash << 5) + hash) + source.charCodeAt(i);
+        hash &= 0xffffffff;
+    }
+    return (hash >>> 0).toString(36);
+}
+
+/** Load cached logos from sessionStorage into memory. */
+function loadLogoCacheFromStorage() {
+    if (logoCacheStore !== null) {
+        return;
+    }
+    logoCacheStore = {};
+    try {
+        const raw = sessionStorage.getItem(LOGO_CACHE_KEY);
+        if (!raw) {
+            return;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+            logoCacheStore = parsed;
+            Object.entries(logoCacheStore).forEach(([key, value]) => {
+                if (typeof value === "string") {
+                    logoCache.set(key, value);
+                }
+            });
+        }
+    } catch (error) {
+        logoCacheStore = {};
+    }
+}
+
+/** Check whether the full logo cache has been built in this session. */
+function isLogoCacheComplete() {
+    try {
+        return sessionStorage.getItem(LOGO_CACHE_DONE_KEY) === "true";
+    } catch (error) {
+        return false;
+    }
+}
+
+/** Mark the full logo cache as complete for this session. */
+function markLogoCacheComplete() {
+    try {
+        sessionStorage.setItem(LOGO_CACHE_DONE_KEY, "true");
+    } catch (error) {
+        return;
+    }
+}
+
+/** Persist a transparent logo into sessionStorage cache. */
+function persistLogoCacheEntry(cacheKey, value) {
+    if (!cacheKey || !value) {
+        return;
+    }
+    if (!logoCacheStore) {
+        logoCacheStore = {};
+    }
+    logoCacheStore[cacheKey] = value;
+    try {
+        sessionStorage.setItem(LOGO_CACHE_KEY, JSON.stringify(logoCacheStore));
+    } catch (error) {
+        if (error && error.name === "QuotaExceededError") {
+            return;
+        }
+    }
+}
+
+/** Pre-warm the logo cache using the full team list during idle time. */
+function prewarmAllTeamLogos() {
+    if (isLogoCacheComplete()) {
+        return;
+    }
+
+    fetch('/api/get_team_list')
+        .then(res => res.json())
+        .then(teamList => {
+            if (!Array.isArray(teamList) || teamList.length === 0) {
+                return;
+            }
+
+            let index = 0;
+            const runBatch = (deadline) => {
+                let processed = 0;
+                const hasIdle = deadline && typeof deadline.timeRemaining === "function";
+
+                while (index < teamList.length) {
+                    const team = teamList[index];
+                    index += 1;
+                    if (team.logo_base64) {
+                        const source = `data:image/png;base64,${team.logo_base64}`;
+                        makeTransparentLogo(source);
+                    }
+                    processed += 1;
+                    if (hasIdle && deadline.timeRemaining() < 1) {
+                        break;
+                    }
+                    if (!hasIdle && processed >= 6) {
+                        break;
+                    }
+                }
+
+                if (index < teamList.length) {
+                    if (typeof requestIdleCallback === "function") {
+                        requestIdleCallback(runBatch, { timeout: 500 });
+                    } else {
+                        setTimeout(() => runBatch(null), 120);
+                    }
+                } else {
+                    markLogoCacheComplete();
+                }
+            };
+
+            if (typeof requestIdleCallback === "function") {
+                requestIdleCallback(runBatch, { timeout: 800 });
+            } else {
+                setTimeout(() => runBatch(null), 200);
+            }
+        })
+        .catch(() => {});
+}
 
 /** Remove near-white background pixels connected to the image edge. */
 function stripWhiteBackground(imageData, width, height, threshold) {
@@ -64,8 +192,15 @@ function makeTransparentLogo(source) {
     if (!source) {
         return Promise.resolve(null);
     }
-    if (logoCache.has(source)) {
-        return Promise.resolve(logoCache.get(source));
+    loadLogoCacheFromStorage();
+    const cacheKey = hashLogoSource(source);
+    if (logoCache.has(cacheKey)) {
+        return Promise.resolve(logoCache.get(cacheKey));
+    }
+    if (logoCacheStore && logoCacheStore[cacheKey]) {
+        const cached = logoCacheStore[cacheKey];
+        logoCache.set(cacheKey, cached);
+        return Promise.resolve(cached);
     }
 
     return new Promise((resolve) => {
@@ -80,7 +215,8 @@ function makeTransparentLogo(source) {
             stripWhiteBackground(imageData, canvas.width, canvas.height, LOGO_WHITE_THRESHOLD);
             ctx.putImageData(imageData, 0, 0);
             const transparentSource = canvas.toDataURL("image/png");
-            logoCache.set(source, transparentSource);
+            logoCache.set(cacheKey, transparentSource);
+            persistLogoCacheEntry(cacheKey, transparentSource);
             resolve(transparentSource);
         };
         img.onerror = () => resolve(source);
@@ -342,6 +478,11 @@ async function renderChart() {
 /** Initialize the Plotly page on load. */
 async function initializePage() {
     renderChart();
+    if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(() => prewarmAllTeamLogos(), { timeout: 800 });
+    } else {
+        setTimeout(() => prewarmAllTeamLogos(), 400);
+    }
 }
 
 window.addEventListener('DOMContentLoaded', initializePage);

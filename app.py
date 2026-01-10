@@ -783,6 +783,35 @@ def create_top_68():
     except Exception as e:
         logging.debug(f"An error occured: {e}")
 
+
+@app.route('/api/get_team_list')
+def get_team_list():
+    """Return team names with optional base64 logos for UI lists."""
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT t.team_name, l.logo_binary
+            FROM team t
+            LEFT JOIN logos l ON t.team_id = l.team_id
+            ORDER BY t.team_name
+        """)
+        teams = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        for team in teams:
+            logo_binary = team.get("logo_binary")
+            if logo_binary:
+                team["logo_base64"] = base64.b64encode(logo_binary).decode("utf-8")
+            else:
+                team["logo_base64"] = None
+            team.pop("logo_binary", None)
+
+        return jsonify(teams)
+    except Exception as e:
+        logging.debug(f"An error occured in get_team_list: {e}")
+
 if __name__ == '__main__':
     # app.run(debug=True)
     app.run(host="0.0.0.0", port=10000)

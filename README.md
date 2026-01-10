@@ -7,6 +7,7 @@ Matchup Madness is a Flask web app for comparing NCAA basketball teams, explorin
 - Team stats and advanced ratings tables with conference filters.
 - Matchup Maker with searchable team inputs, side-by-side comparison, and win probability gauges.
 - Plotly chart view to explore top teams or conferences with team logos.
+- Transparent logo rendering with session-level caching for faster UI loads.
 - REST endpoints for data retrieval and model inference.
 
 ## Pages
@@ -91,6 +92,8 @@ All endpoints return JSON. Parameters are provided as query strings.
   Returns advanced team ratings and efficiency metrics for all teams.
 - `/api/get_team_names`
   Returns an array of team names, sorted alphabetically.
+- `/api/get_team_list`
+  Returns team names with optional `logo_base64` for UI lists.
 - `/api/get_player_stats`
   Returns player rows with team and conference context.
   Response shape: `{ "player_data": [...] }`
@@ -124,3 +127,4 @@ All endpoints return JSON. Parameters are provided as query strings.
 ## Notes
 - Data attribution is shown in the footer (Sports Reference).
 - The matchup UI expects the two probability calls to be available and the logos stored in the `logos` table.
+- Transparent logos are cached in `sessionStorage` during idle time to improve repeat visits.

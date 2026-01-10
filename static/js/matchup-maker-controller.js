@@ -1,15 +1,244 @@
 let teams = {}
-let teamNamesList = [];
+let teamList = [];
 let team1_prob = 0;
 let team2_prob = 0;
 let first = 0;
+const logoCache = new Map();
+const LOGO_WHITE_THRESHOLD = 245;
+const LOGO_CACHE_KEY = "mm_logo_cache_v1";
+const LOGO_CACHE_DONE_KEY = "mm_logo_cache_complete_v1";
+let logoCacheStore = null;
+let logoPrewarmIndex = 0;
+let logoPrewarmScheduled = false;
+
+/** Create a stable hash for cache keys. */
+function hashLogoSource(source) {
+    let hash = 5381;
+    for (let i = 0; i < source.length; i += 1) {
+        hash = ((hash << 5) + hash) + source.charCodeAt(i);
+        hash &= 0xffffffff;
+    }
+    return (hash >>> 0).toString(36);
+}
+
+/** Load cached logos from sessionStorage into memory. */
+function loadLogoCacheFromStorage() {
+    if (logoCacheStore !== null) {
+        return;
+    }
+    logoCacheStore = {};
+    try {
+        const raw = sessionStorage.getItem(LOGO_CACHE_KEY);
+        if (!raw) {
+            return;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+            logoCacheStore = parsed;
+            Object.entries(logoCacheStore).forEach(([key, value]) => {
+                if (typeof value === "string") {
+                    logoCache.set(key, value);
+                }
+            });
+        }
+    } catch (error) {
+        logoCacheStore = {};
+    }
+}
+
+/** Check whether the full logo cache has been built in this session. */
+function isLogoCacheComplete() {
+    try {
+        return sessionStorage.getItem(LOGO_CACHE_DONE_KEY) === "true";
+    } catch (error) {
+        return false;
+    }
+}
+
+/** Mark the full logo cache as complete for this session. */
+function markLogoCacheComplete() {
+    try {
+        sessionStorage.setItem(LOGO_CACHE_DONE_KEY, "true");
+    } catch (error) {
+        return;
+    }
+}
+
+/** Persist a transparent logo into sessionStorage cache. */
+function persistLogoCacheEntry(cacheKey, value) {
+    if (!cacheKey || !value) {
+        return;
+    }
+    if (!logoCacheStore) {
+        logoCacheStore = {};
+    }
+    logoCacheStore[cacheKey] = value;
+    try {
+        sessionStorage.setItem(LOGO_CACHE_KEY, JSON.stringify(logoCacheStore));
+    } catch (error) {
+        if (error && error.name === "QuotaExceededError") {
+            return;
+        }
+    }
+}
+
+/** Remove near-white background pixels connected to the image edge. */
+function stripWhiteBackground(imageData, width, height, threshold) {
+    const data = imageData.data;
+    const visited = new Uint8Array(width * height);
+    const queue = [];
+
+    const isWhite = (idx) => {
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        const a = data[idx + 3];
+        return a > 0 && r >= threshold && g >= threshold && b >= threshold;
+    };
+
+    const enqueue = (x, y) => {
+        const pos = y * width + x;
+        if (visited[pos]) {
+            return;
+        }
+        const idx = pos * 4;
+        if (!isWhite(idx)) {
+            return;
+        }
+        visited[pos] = 1;
+        queue.push(pos);
+    };
+
+    for (let x = 0; x < width; x += 1) {
+        enqueue(x, 0);
+        enqueue(x, height - 1);
+    }
+
+    for (let y = 1; y < height - 1; y += 1) {
+        enqueue(0, y);
+        enqueue(width - 1, y);
+    }
+
+    while (queue.length) {
+        const pos = queue.pop();
+        const x = pos % width;
+        const y = Math.floor(pos / width);
+
+        if (x > 0) enqueue(x - 1, y);
+        if (x < width - 1) enqueue(x + 1, y);
+        if (y > 0) enqueue(x, y - 1);
+        if (y < height - 1) enqueue(x, y + 1);
+    }
+
+    for (let i = 0; i < visited.length; i += 1) {
+        if (visited[i]) {
+            data[i * 4 + 3] = 0;
+        }
+    }
+}
+
+/** Convert a base64 logo to a transparent-background version. */
+function makeTransparentLogo(source) {
+    if (!source) {
+        return Promise.resolve(null);
+    }
+    loadLogoCacheFromStorage();
+    const cacheKey = hashLogoSource(source);
+    if (logoCache.has(cacheKey)) {
+        return Promise.resolve(logoCache.get(cacheKey));
+    }
+    if (logoCacheStore && logoCacheStore[cacheKey]) {
+        const cached = logoCacheStore[cacheKey];
+        logoCache.set(cacheKey, cached);
+        return Promise.resolve(cached);
+    }
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            stripWhiteBackground(imageData, canvas.width, canvas.height, LOGO_WHITE_THRESHOLD);
+            ctx.putImageData(imageData, 0, 0);
+            const transparentSource = canvas.toDataURL("image/png");
+            logoCache.set(cacheKey, transparentSource);
+            persistLogoCacheEntry(cacheKey, transparentSource);
+            resolve(transparentSource);
+        };
+        img.onerror = () => resolve(source);
+        img.src = source;
+    });
+}
+
+/** Apply a transparent logo to an image element and cache the result. */
+function setLogoImage(img, base64, name) {
+    if (!img || !base64) {
+        return;
+    }
+    const rawSource = `data:image/png;base64,${base64}`;
+    img.alt = name ? `${name} logo` : 'Team logo';
+    makeTransparentLogo(rawSource).then((transparent) => {
+        img.src = transparent || rawSource;
+    });
+}
+
+/** Pre-warm transparent logo cache during idle time. */
+function scheduleLogoPrewarm() {
+    if (logoPrewarmScheduled || teamList.length === 0 || isLogoCacheComplete()) {
+        return;
+    }
+    logoPrewarmScheduled = true;
+
+    const runBatch = (deadline) => {
+        let processed = 0;
+        const hasIdle = deadline && typeof deadline.timeRemaining === "function";
+
+        while (logoPrewarmIndex < teamList.length) {
+            const team = teamList[logoPrewarmIndex];
+            logoPrewarmIndex += 1;
+
+            if (team.logo_base64) {
+                const source = `data:image/png;base64,${team.logo_base64}`;
+                makeTransparentLogo(source);
+            }
+
+            processed += 1;
+            if (hasIdle && deadline.timeRemaining() < 1) {
+                break;
+            }
+            if (!hasIdle && processed >= 6) {
+                break;
+            }
+        }
+
+        if (logoPrewarmIndex < teamList.length) {
+            if (typeof requestIdleCallback === "function") {
+                requestIdleCallback(runBatch, { timeout: 500 });
+            } else {
+                setTimeout(() => runBatch(null), 120);
+            }
+        } else {
+            markLogoCacheComplete();
+        }
+    };
+
+    if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(runBatch, { timeout: 500 });
+    } else {
+        setTimeout(() => runBatch(null), 120);
+    }
+}
 
 /** Render filtered team options into a custom dropdown list. */
 function renderTeamOptions(dropdown, query) {
     const normalizedQuery = query.trim().toLowerCase();
     dropdown.innerHTML = '';
 
-    const matches = teamNamesList.filter(name => name.toLowerCase().includes(normalizedQuery));
+    const matches = teamList.filter(team => team.name.toLowerCase().includes(normalizedQuery));
 
     if (matches.length === 0) {
         const empty = document.createElement('div');
@@ -19,12 +248,28 @@ function renderTeamOptions(dropdown, query) {
         return;
     }
 
-    matches.forEach(name => {
+    matches.forEach(team => {
         const option = document.createElement('button');
         option.type = 'button';
         option.classList.add('team-option');
-        option.dataset.value = name;
-        option.textContent = name;
+        option.dataset.value = team.name;
+
+        const logoWrapper = document.createElement('span');
+        logoWrapper.classList.add('team-option-logo');
+        if (team.logo_base64) {
+            const logo = document.createElement('img');
+            logo.loading = 'lazy';
+            logoWrapper.appendChild(logo);
+            setLogoImage(logo, team.logo_base64, team.name);
+        } else {
+            logoWrapper.classList.add('is-placeholder');
+        }
+
+        const label = document.createElement('span');
+        label.textContent = team.name;
+
+        option.appendChild(logoWrapper);
+        option.appendChild(label);
         dropdown.appendChild(option);
     });
 }
@@ -111,17 +356,21 @@ function fetchAndAddTeams() {
     setupSearchableDropdown(team1Search, team1Dropdown, team1Select);
     setupSearchableDropdown(team2Search, team2Dropdown, team2Select);
 
-    fetch('/api/get_team_names')
+    fetch('/api/get_team_list')
         .then(res => res.json())
         .then(teamNames => {
             teams = teamNames;
-            teamNamesList = teamNames.map(name => name[0]);
-            teamNamesList.forEach(name => {
-                team1Select.add(new Option(name, name));
-                team2Select.add(new Option(name, name));
+            teamList = teamNames.map(team => ({
+                name: team.team_name,
+                logo_base64: team.logo_base64
+            }));
+            teamList.forEach(team => {
+                team1Select.add(new Option(team.name, team.name));
+                team2Select.add(new Option(team.name, team.name));
             });
             renderTeamOptions(team1Dropdown, '');
             renderTeamOptions(team2Dropdown, '');
+            scheduleLogoPrewarm();
         });
 }
 
@@ -165,7 +414,7 @@ function renderMatchup(team1, team2) {
     const leftLogo = document.createElement('img');
     leftLogo.classList.add('matchup-logo');
     if (team1.logo_base64) {
-        leftLogo.src = `data:image/png;base64,${team1.logo_base64}`;
+        setLogoImage(leftLogo, team1.logo_base64, team1.team_name);
     }
 
     const leftGaugeContainer = document.createElement('div');
@@ -199,7 +448,7 @@ function renderMatchup(team1, team2) {
     const rightLogo = document.createElement('img');
     rightLogo.classList.add('matchup-logo');
     if (team2.logo_base64) {
-        rightLogo.src = `data:image/png;base64,${team2.logo_base64}`;
+        setLogoImage(rightLogo, team2.logo_base64, team2.team_name);
     }
 
     const rightGaugeContainer = document.createElement('div');
