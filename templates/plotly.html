@@ -14,6 +14,7 @@
             </div>
 
             <div class="controls-container">
+                <label class="dropdown-desc" for="howSelect">Team Set</label>
                 <select id="howSelect" class="team-selector plotly-select">
                     <option value="Top 68 Teams By Madness Rating">Top 68 Teams By Madness Rating</option>
                     <option value="Top 68 Teams By Net Rating">Top 68 Teams By Net Rating</option>
@@ -50,6 +51,18 @@
                     <option value="WAC">WAC</option>
                     <option value="WCC">WCC</option>
                 </select>
+                <label class="dropdown-desc" for="xStatSelect">X Axis</label>
+                <select id="xStatSelect" class="team-selector plotly-select"></select>
+                <label class="dropdown-desc" for="yStatSelect">Y Axis</label>
+                <select id="yStatSelect" class="team-selector plotly-select"></select>
+                <div class="plotly-correlation">
+                    <span class="dropdown-desc">Correlation</span>
+                    <span id="plotly-correlation-value">--</span>
+                </div>
+                <label class="plotly-toggle">
+                    <input id="regressionToggle" type="checkbox">
+                    <span>Show regression line</span>
+                </label>
             </div>
         </div>
         <div class="footer-padding" style="height: 10%;"></div>

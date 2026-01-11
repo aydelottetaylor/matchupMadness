@@ -2,6 +2,7 @@ import mysql.connector
 import logging
 import os
 import base64
+import time
 import joblib
 import pandas as pd
 
@@ -12,6 +13,65 @@ from flask import Flask, jsonify, render_template, request, send_from_directory,
 log_path = os.path.join(os.path.dirname(__file__), 'backend/backend_log.txt')
 model_path = os.path.join(os.path.dirname(__file__), 'model_1_0.pkl')
 MODEL = joblib.load(model_path)
+STAT_RANKS_CACHE = {"data": None, "timestamp": 0.0}
+STAT_RANKS_TTL_SECONDS = 300
+PLOTLY_STATS = [
+    "3_point_attempt_rate",
+    "3_point_field_goals",
+    "3_point_field_goals_attempted",
+    "3_point_percentage",
+    "ap_rank",
+    "assist_percentage",
+    "assists",
+    "block_percentage",
+    "blocks",
+    "defensive_rating_adjusted",
+    "defensive_srs",
+    "effective_field_goal_percentage",
+    "field_goal_percentage",
+    "field_goals",
+    "field_goals_attempted",
+    "free_throw_attempt_rate",
+    "free_throw_percentage",
+    "free_throws",
+    "free_throws_attempted",
+    "free_throws_per_field_goal",
+    "games",
+    "home_losses",
+    "home_wins",
+    "losses",
+    "losses_conf",
+    "losses_visitor",
+    "madness_rating",
+    "margin_of_victory",
+    "minutes_played",
+    "net_rating_adjusted",
+    "offensive_rating",
+    "offensive_rating_adjusted",
+    "offensive_rebound_percentage",
+    "offensive_rebounds",
+    "offensive_srs",
+    "opp_points_per_game",
+    "opponent_points",
+    "pace",
+    "personal_fouls",
+    "pts_per_game",
+    "simple_rating_system",
+    "steal_percentage",
+    "steals",
+    "strength_of_schedule",
+    "team_points",
+    "team_rebound_percentage",
+    "team_rebounds",
+    "turnover_percentage",
+    "turnovers",
+    "true_shooting_percentage",
+    "win_percentage",
+    "wins",
+    "wins_conf",
+    "wins_visitor"
+]
+PLOTLY_STAT_KEY_MAP = {}
 
 logging.basicConfig(
     filename=log_path,
@@ -65,6 +125,16 @@ def build_matchup_features(team_home, team_away):
         'ft_rate_diff': team_home['free_throw_attempt_rate'] - team_away['free_throw_attempt_rate'],
         '3pa_rate_diff': team_home['3_point_attempt_rate'] - team_away['3_point_attempt_rate']
     }
+
+
+def resolve_plotly_stat_key(stat_key, sample_row):
+    """Resolve a plotly stat key to a valid database column."""
+    if stat_key in sample_row:
+        return stat_key
+    mapped = PLOTLY_STAT_KEY_MAP.get(stat_key)
+    if mapped and mapped in sample_row:
+        return mapped
+    return None
 
 
 @app.route('/')
@@ -594,28 +664,14 @@ def get_matchup_data():
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
-        
-        def get_team_data(team_name):
-            """Fetch a team row and attach a base64 logo."""
-            cursor.execute("""
-                SELECT t.*, l.logo_binary
-                FROM team t
-                LEFT JOIN logos l ON t.team_id = l.team_id
-                WHERE t.team_name = %s
-            """, (team_name,))
-            team = cursor.fetchone()
-            if team and team["logo_binary"]:
-                # Convert binary logo to base64 string
-                team["logo_base64"] = base64.b64encode(team["logo_binary"]).decode("utf-8")
-            else:
-                team["logo_base64"] = None
-                
-            if "logo_binary" in team:
-                del team["logo_binary"]
-            return team
-        
+
         def get_stat_ranks():
-            """Build per-team stat ranking dictionaries."""
+            """Build per-team stat ranking dictionaries with a short-lived cache."""
+            now = time.time()
+            cached = STAT_RANKS_CACHE["data"]
+            if cached and (now - STAT_RANKS_CACHE["timestamp"]) < STAT_RANKS_TTL_SECONDS:
+                return cached
+
             cursor.execute("SELECT * FROM team")
             teams = cursor.fetchall()
 
@@ -665,10 +721,32 @@ def get_matchup_data():
                         rankings[tid][stat] = rank
                         prev_value = value
 
+            STAT_RANKS_CACHE["data"] = rankings
+            STAT_RANKS_CACHE["timestamp"] = now
             return rankings
-        
-        team1_data = get_team_data(team1)
-        team2_data = get_team_data(team2)
+
+        cursor.execute("""
+            SELECT t.*, l.logo_binary
+            FROM team t
+            LEFT JOIN logos l ON t.team_id = l.team_id
+            WHERE t.team_name IN (%s, %s)
+        """, (team1, team2))
+        team_rows = cursor.fetchall()
+        team_map = {}
+        for team in team_rows:
+            if team.get("logo_binary"):
+                team["logo_base64"] = base64.b64encode(team["logo_binary"]).decode("utf-8")
+            else:
+                team["logo_base64"] = None
+            team.pop("logo_binary", None)
+            team_map[team["team_name"]] = team
+
+        team1_data = team_map.get(team1)
+        team2_data = team_map.get(team2)
+        if not team1_data or not team2_data:
+            cursor.close()
+            conn.close()
+            return jsonify({}), 404
         
         rankings = get_stat_ranks()
         team1_data["stat_ranks"] = rankings.get(team1_data["team_id"], {})
@@ -716,44 +794,52 @@ def create_top_68():
         cursor = conn.cursor(dictionary=True)
         if how == "Top 68 Teams By Madness Rating":
             sql = """
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
-                FROM team
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
+                FROM team t
+                LEFT JOIN logos l ON t.team_id = l.team_id
                 ORDER BY madness_rating DESC
                 LIMIT 68
             """
         elif how == "Top 68 Teams By Net Rating":
             sql = """
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
-                FROM team
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
+                FROM team t
+                LEFT JOIN logos l ON t.team_id = l.team_id
                 ORDER BY net_rating_adjusted DESC
                 LIMIT 68
             """
         elif how == "All Teams":
             sql = """
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
-                FROM team
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
+                FROM team t
+                LEFT JOIN logos l ON t.team_id = l.team_id
             """
         else:
             sql = f"""
-                SELECT team_name,
-                    offensive_rating_adjusted,
-                    defensive_rating_adjusted,
-                    net_rating_adjusted,
-                    madness_rating
+                SELECT t.team_name,
+                    t.offensive_rating_adjusted,
+                    t.defensive_rating_adjusted,
+                    t.net_rating_adjusted,
+                    t.madness_rating,
+                    l.logo_binary
                 FROM team t
                 JOIN conference c on c.conference_id = t.conference_id
+                LEFT JOIN logos l ON t.team_id = l.team_id
                 WHERE c.conference_abbreviation = '{how}'
                 ORDER BY net_rating_adjusted DESC
                 LIMIT 68
@@ -763,9 +849,173 @@ def create_top_68():
         cursor.close()
         conn.close()
 
+        for team in teams:
+            logo_binary = team.get("logo_binary")
+            if logo_binary:
+                team["logo_base64"] = base64.b64encode(logo_binary).decode("utf-8")
+            else:
+                team["logo_base64"] = None
+            team.pop("logo_binary", None)
+
         return jsonify(teams)
     except Exception as e:
         logging.debug(f"An error occured: {e}")
+
+
+@app.route('/api/get_plotly_averages')
+def get_plotly_averages():
+    """Return national averages for selected plotly stats."""
+    x_stat = request.args.get('x') or 'offensive_rating_adjusted'
+    y_stat = request.args.get('y') or 'defensive_rating_adjusted'
+
+    if x_stat not in PLOTLY_STATS or y_stat not in PLOTLY_STATS:
+        return jsonify({"error": "Invalid stat selection."}), 400
+
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM team LIMIT 1")
+        sample_row = cursor.fetchone()
+        if not sample_row:
+            cursor.close()
+            conn.close()
+            return jsonify({"x_avg": None, "y_avg": None})
+
+        x_key = resolve_plotly_stat_key(x_stat, sample_row)
+        y_key = resolve_plotly_stat_key(y_stat, sample_row)
+        if not x_key or not y_key:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Stat column not found."}), 400
+
+        sql = f"""
+            SELECT
+                AVG(t.`{x_key}`) AS x_avg,
+                AVG(t.`{y_key}`) AS y_avg
+            FROM team t
+        """
+        cursor.execute(sql)
+        averages = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        return jsonify(averages or {"x_avg": None, "y_avg": None})
+    except Exception as e:
+        logging.debug(f"An error occured in get_plotly_averages: {e}")
+
+
+@app.route('/api/fetch_plotly')
+def fetch_plotly_data():
+    """Return plotly-ready team data for selected x/y stats."""
+    how = request.args.get('how')
+    x_stat = request.args.get('x') or 'offensive_rating_adjusted'
+    y_stat = request.args.get('y') or 'defensive_rating_adjusted'
+
+    if x_stat not in PLOTLY_STATS or y_stat not in PLOTLY_STATS:
+        return jsonify({"error": "Invalid stat selection."}), 400
+
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        order_by = None
+        limit = None
+        params = []
+
+        if how == "Top 68 Teams By Madness Rating":
+            order_by = "madness_rating"
+            limit = 68
+        elif how == "Top 68 Teams By Net Rating":
+            order_by = "net_rating_adjusted"
+            limit = 68
+        elif how == "All Teams":
+            order_by = None
+            limit = None
+        else:
+            order_by = "net_rating_adjusted"
+            limit = 68
+
+        sql = """
+            SELECT t.*, l.logo_binary
+            FROM team t
+            LEFT JOIN logos l ON t.team_id = l.team_id
+        """
+
+        if how and how not in ("Top 68 Teams By Madness Rating", "Top 68 Teams By Net Rating", "All Teams"):
+            sql += """
+                JOIN conference c on c.conference_id = t.conference_id
+                WHERE c.conference_abbreviation = %s
+            """
+            params.append(how)
+
+        if order_by:
+            sql += f" ORDER BY t.`{order_by}` DESC"
+        if limit:
+            sql += " LIMIT %s"
+            params.append(limit)
+
+        cursor.execute(sql, params)
+        teams = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        if not teams:
+            return jsonify([])
+
+        x_key = resolve_plotly_stat_key(x_stat, teams[0])
+        y_key = resolve_plotly_stat_key(y_stat, teams[0])
+        if not x_key or not y_key:
+            return jsonify({"error": "Stat column not found."}), 400
+
+        response = []
+        for team in teams:
+            logo_binary = team.get("logo_binary")
+            if logo_binary:
+                logo_base64 = base64.b64encode(logo_binary).decode("utf-8")
+            else:
+                logo_base64 = None
+            response.append({
+                "team_name": team.get("team_name"),
+                "x_value": team.get(x_key),
+                "y_value": team.get(y_key),
+                "net_rating_adjusted": team.get("net_rating_adjusted"),
+                "madness_rating": team.get("madness_rating"),
+                "logo_base64": logo_base64
+            })
+
+        return jsonify(response)
+    except Exception as e:
+        logging.debug(f"An error occured in fetch_plotly_data: {e}")
+
+
+@app.route('/api/get_team_list')
+def get_team_list():
+    """Return team names with optional base64 logos for UI lists."""
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT t.team_name, l.logo_binary
+            FROM team t
+            LEFT JOIN logos l ON t.team_id = l.team_id
+            ORDER BY t.team_name
+        """)
+        teams = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        for team in teams:
+            logo_binary = team.get("logo_binary")
+            if logo_binary:
+                team["logo_base64"] = base64.b64encode(logo_binary).decode("utf-8")
+            else:
+                team["logo_base64"] = None
+            team.pop("logo_binary", None)
+
+        return jsonify(teams)
+    except Exception as e:
+        logging.debug(f"An error occured in get_team_list: {e}")
 
 if __name__ == '__main__':
     # app.run(debug=True)

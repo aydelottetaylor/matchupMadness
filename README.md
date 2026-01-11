@@ -6,7 +6,10 @@ Matchup Madness is a Flask web app for comparing NCAA basketball teams, explorin
 - Home dashboard with AP Top 25, Madness Rankings, and tiered team tables.
 - Team stats and advanced ratings tables with conference filters.
 - Matchup Maker with searchable team inputs, side-by-side comparison, and win probability gauges.
-- Plotly chart view to explore top teams or conferences.
+- Plotly chart view to explore top teams or conferences with team logos.
+- Plotly axis selectors to compare any stat vs any stat.
+- Plotly regression line toggle (off by default) for quick trend visualization.
+- Transparent logo rendering with session-level caching for faster UI loads.
 - REST endpoints for data retrieval and model inference.
 
 ## Pages
@@ -91,6 +94,8 @@ All endpoints return JSON. Parameters are provided as query strings.
   Returns advanced team ratings and efficiency metrics for all teams.
 - `/api/get_team_names`
   Returns an array of team names, sorted alphabetically.
+- `/api/get_team_list`
+  Returns team names with optional `logo_base64` for UI lists.
 - `/api/get_player_stats`
   Returns player rows with team and conference context.
   Response shape: `{ "player_data": [...] }`
@@ -103,12 +108,17 @@ All endpoints return JSON. Parameters are provided as query strings.
 - `/api/get_averages_for_net`
   Returns average offensive and defensive ratings used for net comparisons.
 - `/api/fetch_top_68?how=<mode-or-conference>`
-  Returns top-68 teams for Plotly.
+  Returns top-68 teams for Plotly (includes `logo_base64` for logo rendering).
   Accepted `how` values:
   - `Top 68 Teams By Madness Rating`
   - `Top 68 Teams By Net Rating`
   - `All Teams`
   - Any conference abbreviation (e.g. `ACC`, `SEC`, `Big 12`, etc.)
+- `/api/fetch_plotly?how=<mode-or-conference>&x=<stat>&y=<stat>`
+  Returns plotly-ready rows for the selected x/y stats (includes `x_value`, `y_value`, and `logo_base64`).
+  Allowed stats are limited to columns in the `team` table (see `PLOTLY_STATS` in `app.py`).
+- `/api/get_plotly_averages?x=<stat>&y=<stat>`
+  Returns national averages for the selected x/y stats.
 - `/api/matchup?team1=<name>&team2=<name>`
   Returns both teams with full stat rows, base64 logos, and stat rank dictionaries.
   Response shape: `{ "team1": {...}, "team2": {...} }`
@@ -124,3 +134,5 @@ All endpoints return JSON. Parameters are provided as query strings.
 ## Notes
 - Data attribution is shown in the footer (Sports Reference).
 - The matchup UI expects the two probability calls to be available and the logos stored in the `logos` table.
+- Transparent logos are cached in `sessionStorage` during idle time to improve repeat visits.
+- Plotly axis selectors are populated from the `team` table stats and sorted alphabetically by label.
