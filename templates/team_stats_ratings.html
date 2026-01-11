@@ -16,44 +16,50 @@
             <button id="team-ratings-button" class="srbutton">Team Ratings/Adv. Stats</button>
         </div>
 
-        <br>
-        <label for="conferences-dropdown" class="dropdown-desc">Filter by Conf.</label>
-        <select name="conferences" id="conferences-dropdown" class="dropdown">
-            <option value="None"> - None - </option>
-            <option value="A-10">A-10</option>
-            <option value="A-Sun">A-Sun</option>
-            <option value="ACC">ACC</option>
-            <option value="AmEast">AmEast</option>
-            <option value="American">American</option>
-            <option value="Big 12">Big 12</option>
-            <option value="Big East">Big East</option>
-            <option value="Big Sky">Big Sky</option>
-            <option value="Big South">Big South</option>
-            <option value="Big Ten">Big Ten</option>
-            <option value="Big West">Big West</option>
-            <option value="CAA">CAA</option>
-            <option value="CUSA">CUSA</option>
-            <option value="Horizon">Horizon</option>
-            <option value="Ivy">Ivy</option>
-            <option value="MAAC">MAAC</option>
-            <option value="MAC">MAC</option>
-            <option value="MEAC">MEAC</option>
-            <option value="MVC">MVC</option>
-            <option value="MWC">MWC</option>
-            <option value="NEC">NEC</option>
-            <option value="OVC">OVC</option>
-            <option value="Patriot">Patriot</option>
-            <option value="SEC">SEC</option>
-            <option value="Southern">Southern</option>
-            <option value="Southland">Southland</option>
-            <option value="Summit">Summit</option>
-            <option value="Sun Belt">Sun Belt</option>
-            <option value="SWAC">SWAC</option>
-            <option value="WAC">WAC</option>
-            <option value="WCC">WCC</option>
-        </select>
-        
-        <br><br>
+        <div class="table-filter-row">
+            <div class="table-filter">
+                <label for="conferences-dropdown" class="dropdown-desc">Filter by Conf.</label>
+                <select name="conferences" id="conferences-dropdown" class="dropdown">
+                    <option value="None"> - None - </option>
+                    <option value="A-10">A-10</option>
+                    <option value="A-Sun">A-Sun</option>
+                    <option value="ACC">ACC</option>
+                    <option value="AmEast">AmEast</option>
+                    <option value="American">American</option>
+                    <option value="Big 12">Big 12</option>
+                    <option value="Big East">Big East</option>
+                    <option value="Big Sky">Big Sky</option>
+                    <option value="Big South">Big South</option>
+                    <option value="Big Ten">Big Ten</option>
+                    <option value="Big West">Big West</option>
+                    <option value="CAA">CAA</option>
+                    <option value="CUSA">CUSA</option>
+                    <option value="Horizon">Horizon</option>
+                    <option value="Ivy">Ivy</option>
+                    <option value="MAAC">MAAC</option>
+                    <option value="MAC">MAC</option>
+                    <option value="MEAC">MEAC</option>
+                    <option value="MVC">MVC</option>
+                    <option value="MWC">MWC</option>
+                    <option value="NEC">NEC</option>
+                    <option value="OVC">OVC</option>
+                    <option value="Patriot">Patriot</option>
+                    <option value="SEC">SEC</option>
+                    <option value="Southern">Southern</option>
+                    <option value="Southland">Southland</option>
+                    <option value="Summit">Summit</option>
+                    <option value="Sun Belt">Sun Belt</option>
+                    <option value="SWAC">SWAC</option>
+                    <option value="WAC">WAC</option>
+                    <option value="WCC">WCC</option>
+                </select>
+            </div>
+            <label class="table-toggle">
+                <input id="heatmap-toggle" type="checkbox">
+                <span>Heatmap</span>
+            </label>
+        </div>
+
         <div id="data-list"></div>
 
         <div id="team-stats-glossary" style="display: block;">

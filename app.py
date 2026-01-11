@@ -201,23 +201,31 @@ def get_top_25_data():
 
 @app.route('/api/generateMadnessRtg')
 def generate_madness_ratings():
-    """Return Madness Ratings for all teams with ranks and conferences."""
+    """Return Madness Ratings for all teams with ranks, records, and conferences."""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
 
         sql = """
-            SELECT team_name, madness_rating, net_rating_adjusted, c.conference_abbreviation
+            SELECT t.team_name,
+                t.wins,
+                t.losses,
+                t.madness_rating,
+                t.net_rating_adjusted,
+                c.conference_abbreviation
             FROM team t
             JOIN conference c ON c.conference_id = t.conference_id
-            ORDER BY madness_rating DESC
+            ORDER BY t.madness_rating DESC
         """
 
         cursor.execute(sql)
         ratings = cursor.fetchall()
-        ratings.sort(key=lambda x: x[1], reverse=True)
+        ratings.sort(key=lambda x: x[3], reverse=True)
 
-        ratings = [(rank + 1, team_name, rating, net, conference) for rank, (team_name, rating, net, conference) in enumerate(ratings)]
+        ratings = [
+            (rank + 1, team_name, f"{wins}-{losses}", rating, net, conference)
+            for rank, (team_name, wins, losses, rating, net, conference) in enumerate(ratings)
+        ]
 
         return jsonify(ratings)
     except Exception as e:

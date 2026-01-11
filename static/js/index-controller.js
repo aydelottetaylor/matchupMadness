@@ -116,6 +116,7 @@ function createMadnessTable() {
     headers = [
         'Rk.',
         'Team',
+        'W-L',
         'Madness Rtg.',
         'Net Rtg. Adj.',
         'Conf.'
@@ -191,8 +192,7 @@ function createTeamSection() {
     let headers = [
         'Team',
         'Conf.',
-        'W',
-        'L',
+        'W-L',
         'AP Rank',
         'Madness Rtg.',
         'Net Rtg,',
@@ -235,19 +235,7 @@ function createTeamSection() {
 
     const contenderBody = document.createElement('tbody');
 
-    contenders.forEach(row => {
-        const tr = document.createElement('tr');
-        row.forEach((cell, i) => {
-            const td = document.createElement('td');
-            if (i == 3 || cell != '0') {
-                td.textContent = cell;
-            } else {
-                td.textContent = '';
-            }
-            tr.appendChild(td);
-        });
-        contenderBody.appendChild(tr);
-    });
+    buildTeamRows(contenderBody, contenders);
 
     contenderTable.appendChild(contenderBody);
     container.appendChild(contenderTable);
@@ -281,19 +269,7 @@ function createTeamSection() {
 
     const nextBody = document.createElement('tbody');
 
-    nextUp.forEach(row => {
-        const tr = document.createElement('tr');
-        row.forEach((cell, i) => {
-            const td = document.createElement('td');
-            if (i == 3 || cell != '0') {
-                td.textContent = cell;
-            } else {
-                td.textContent = '';
-            }
-            tr.appendChild(td);
-        });
-        nextBody.appendChild(tr);
-    });
+    buildTeamRows(nextBody, nextUp);
 
     nextTable.appendChild(nextBody);
     container.appendChild(nextTable);
@@ -327,24 +303,44 @@ function createTeamSection() {
 
     const midBody = document.createElement('tbody');
 
-    midMajors.forEach(row => {
-        const tr = document.createElement('tr');
-        row.forEach((cell, i) => {
-            const td = document.createElement('td');
-            if (i == 3 || cell != '0') {
-                td.textContent = cell;
-            } else {
-                td.textContent = '';
-            }
-            tr.appendChild(td);
-        });
-        midBody.appendChild(tr);
-    });
+    buildTeamRows(midBody, midMajors);
 
     midTable.appendChild(midBody);
     container.appendChild(midTable);
 
     requestAnimationFrame(syncMadnessHeight);
+}
+
+/** Build rows for the contender, next-up, and mid-major tables. */
+function buildTeamRows(tbody, data) {
+    data.forEach(row => {
+        const wins = row[2];
+        const losses = row[3];
+        const rowData = [
+            row[0],
+            row[1],
+            `${wins}-${losses}`,
+            row[4],
+            row[5],
+            row[6],
+            row[7],
+            row[8],
+            row[9],
+            row[10]
+        ];
+
+        const tr = document.createElement('tr');
+        rowData.forEach((cell, i) => {
+            const td = document.createElement('td');
+            if (i !== 2 && (cell === 0 || cell === '0')) {
+                td.textContent = '';
+            } else {
+                td.textContent = cell;
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
 }
 
 /** Render the AP Top 25 table. */
