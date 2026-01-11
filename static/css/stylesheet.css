@@ -224,6 +224,23 @@ a {
     background-color: var(--surface-muted);
 }
 
+.stats-table.heatmap-on tbody tr:nth-child(even) {
+    background-color: transparent;
+}
+
+.stats-table.stats-view.heatmap-on tbody tr:nth-child(even) td:nth-child(1),
+.stats-table.stats-view.heatmap-on tbody tr:nth-child(even) td:nth-child(2),
+.stats-table.stats-view.heatmap-on tbody tr:nth-child(even) td:nth-child(3) {
+    background-color: var(--surface-muted);
+}
+
+.stats-table.ratings-view.heatmap-on tbody tr:nth-child(even) td:nth-child(1),
+.stats-table.ratings-view.heatmap-on tbody tr:nth-child(even) td:nth-child(2),
+.stats-table.ratings-view.heatmap-on tbody tr:nth-child(even) td:nth-child(3),
+.stats-table.ratings-view.heatmap-on tbody tr:nth-child(even) td:nth-child(4) {
+    background-color: var(--surface-muted);
+}
+
 .stats-table tbody tr:hover {
     background-color: rgba(31, 77, 99, 0.12);
 }
@@ -623,6 +640,38 @@ a {
 
 .controls-container .dropdown-desc {
   align-self: flex-start;
+}
+
+.table-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--surface);
+    border: 0.063rem solid var(--border);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    box-shadow: 0 10px 25px -22px rgba(16, 43, 64, 0.6);
+}
+
+.table-toggle input {
+    margin: 0;
+    accent-color: var(--ink);
+}
+
+.table-filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.2rem;
+    margin: 0.9rem 0 1.3rem;
+}
+
+.table-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .plotly-correlation {
