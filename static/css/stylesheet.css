@@ -52,6 +52,10 @@ body > main.no-footer-pad {
     padding-bottom: 3.5rem;
 }
 
+body > main.plotly-pad {
+    padding-bottom: 6rem;
+}
+
 a {
     color: var(--accent);
 }
