@@ -609,12 +609,43 @@ a {
 }
 
 .plotly-select {
-  margin: 1rem auto;
+  margin: 0.45rem auto 0.9rem;
   display: block;
   width: 100%;
   max-width: 220px;
   font-size: 0.85rem;
   padding: 0.45rem 0.7rem;
+}
+
+.controls-container .dropdown-desc {
+  align-self: flex-start;
+}
+
+.plotly-correlation {
+  width: 100%;
+  max-width: 220px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  color: var(--ink);
+}
+
+.plotly-toggle {
+  width: 100%;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.plotly-toggle input {
+  margin: 0;
 }
 
 @keyframes pageFade {

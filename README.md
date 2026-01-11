@@ -7,6 +7,8 @@ Matchup Madness is a Flask web app for comparing NCAA basketball teams, explorin
 - Team stats and advanced ratings tables with conference filters.
 - Matchup Maker with searchable team inputs, side-by-side comparison, and win probability gauges.
 - Plotly chart view to explore top teams or conferences with team logos.
+- Plotly axis selectors to compare any stat vs any stat.
+- Plotly regression line toggle (off by default) for quick trend visualization.
 - Transparent logo rendering with session-level caching for faster UI loads.
 - REST endpoints for data retrieval and model inference.
 
@@ -112,6 +114,11 @@ All endpoints return JSON. Parameters are provided as query strings.
   - `Top 68 Teams By Net Rating`
   - `All Teams`
   - Any conference abbreviation (e.g. `ACC`, `SEC`, `Big 12`, etc.)
+- `/api/fetch_plotly?how=<mode-or-conference>&x=<stat>&y=<stat>`
+  Returns plotly-ready rows for the selected x/y stats (includes `x_value`, `y_value`, and `logo_base64`).
+  Allowed stats are limited to columns in the `team` table (see `PLOTLY_STATS` in `app.py`).
+- `/api/get_plotly_averages?x=<stat>&y=<stat>`
+  Returns national averages for the selected x/y stats.
 - `/api/matchup?team1=<name>&team2=<name>`
   Returns both teams with full stat rows, base64 logos, and stat rank dictionaries.
   Response shape: `{ "team1": {...}, "team2": {...} }`
@@ -128,3 +135,4 @@ All endpoints return JSON. Parameters are provided as query strings.
 - Data attribution is shown in the footer (Sports Reference).
 - The matchup UI expects the two probability calls to be available and the logos stored in the `logos` table.
 - Transparent logos are cached in `sessionStorage` during idle time to improve repeat visits.
+- Plotly axis selectors are populated from the `team` table stats and sorted alphabetically by label.

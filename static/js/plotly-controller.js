@@ -1,12 +1,176 @@
 let how = 'Top 68 Teams By Madness Rating';
 let renderToken = 0;
+let xStat = 'offensive_rating_adjusted';
+let yStat = 'defensive_rating_adjusted';
 
 const howSelect = document.getElementById("howSelect");
+const xStatSelect = document.getElementById("xStatSelect");
+const yStatSelect = document.getElementById("yStatSelect");
+const correlationValue = document.getElementById("plotly-correlation-value");
+const regressionToggle = document.getElementById("regressionToggle");
 const logoCache = new Map();
 const LOGO_WHITE_THRESHOLD = 245;
 const LOGO_CACHE_KEY = "mm_logo_cache_v1";
 const LOGO_CACHE_DONE_KEY = "mm_logo_cache_complete_v1";
 let logoCacheStore = null;
+const STAT_OPTIONS = [
+    "3_point_attempt_rate",
+    "3_point_field_goals",
+    "3_point_field_goals_attempted",
+    "3_point_percentage",
+    "assist_percentage",
+    "assists",
+    "block_percentage",
+    "blocks",
+    "defensive_rating_adjusted",
+    "defensive_srs",
+    "effective_field_goal_percentage",
+    "field_goal_percentage",
+    "field_goals",
+    "field_goals_attempted",
+    "free_throw_attempt_rate",
+    "free_throw_percentage",
+    "free_throws",
+    "free_throws_attempted",
+    "free_throws_per_field_goal",
+    "games",
+    "home_losses",
+    "home_wins",
+    "losses",
+    "losses_conf",
+    "losses_visitor",
+    "madness_rating",
+    "margin_of_victory",
+    "minutes_played",
+    "net_rating_adjusted",
+    "offensive_rating",
+    "offensive_rating_adjusted",
+    "offensive_rebound_percentage",
+    "offensive_rebounds",
+    "offensive_srs",
+    "opp_points_per_game",
+    "opponent_points",
+    "pace",
+    "personal_fouls",
+    "pts_per_game",
+    "simple_rating_system",
+    "steal_percentage",
+    "steals",
+    "strength_of_schedule",
+    "team_points",
+    "team_rebound_percentage",
+    "team_rebounds",
+    "turnover_percentage",
+    "turnovers",
+    "true_shooting_percentage",
+    "win_percentage",
+    "wins",
+    "wins_conf",
+    "wins_visitor"
+];
+const STAT_LABEL_OVERRIDES = {
+    "3_point_attempt_rate": "3-Point Attempt Rate",
+    "3_point_field_goals": "3-Point Field Goals",
+    "3_point_field_goals_attempted": "3-Point Attempts",
+    "3_point_percentage": "3-Point Percentage",
+    ap_rank: "AP Rank",
+    offensive_srs: "Offensive SRS",
+    defensive_srs: "Defensive SRS",
+    defensive_rating_adjusted: "Adj Defensive Rating",
+    net_rating_adjusted: "Adj Net Rating",
+    offensive_rating_adjusted: "Adj Offensive Rating",
+    opp_points_per_game: "Opponent Points Per Game",
+    pts_per_game: "Points Per Game",
+    simple_rating_system: "Simple Rating System",
+    strength_of_schedule: "Strength of Schedule",
+    win_percentage: "Win Percentage"
+};
+const LOWER_IS_BETTER = new Set([
+    "defensive_rating_adjusted",
+    "losses",
+    "losses_conf",
+    "home_losses",
+    "losses_visitor",
+    "opponent_points",
+    "opp_points_per_game",
+    "personal_fouls",
+    "turnovers",
+    "turnover_percentage"
+]);
+
+/** Format stat keys into human-friendly labels. */
+function formatStatLabel(statKey) {
+    if (STAT_LABEL_OVERRIDES[statKey]) {
+        return STAT_LABEL_OVERRIDES[statKey];
+    }
+    const cleaned = statKey.replace(/_/g, " ").replace(/^3 point /, "3-point ");
+    const words = cleaned.split(" ");
+    return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+
+/** Compute Pearson correlation for two numeric arrays. */
+function computeCorrelation(xValues, yValues) {
+    if (xValues.length === 0 || yValues.length === 0 || xValues.length !== yValues.length) {
+        return null;
+    }
+    const count = xValues.length;
+    const meanX = xValues.reduce((sum, val) => sum + val, 0) / count;
+    const meanY = yValues.reduce((sum, val) => sum + val, 0) / count;
+    let numerator = 0;
+    let denomX = 0;
+    let denomY = 0;
+
+    for (let i = 0; i < count; i += 1) {
+        const dx = xValues[i] - meanX;
+        const dy = yValues[i] - meanY;
+        numerator += dx * dy;
+        denomX += dx * dx;
+        denomY += dy * dy;
+    }
+
+    if (denomX === 0 || denomY === 0) {
+        return null;
+    }
+    return numerator / Math.sqrt(denomX * denomY);
+}
+
+/** Compute a regression line (y = mx + b) for the provided values. */
+function computeRegressionLine(xValues, yValues, xMin, xMax) {
+    if (xValues.length < 2 || xValues.length !== yValues.length) {
+        return null;
+    }
+    const count = xValues.length;
+    const meanX = xValues.reduce((sum, val) => sum + val, 0) / count;
+    const meanY = yValues.reduce((sum, val) => sum + val, 0) / count;
+    let numerator = 0;
+    let denom = 0;
+
+    for (let i = 0; i < count; i += 1) {
+        const dx = xValues[i] - meanX;
+        numerator += dx * (yValues[i] - meanY);
+        denom += dx * dx;
+    }
+
+    if (denom === 0) {
+        return null;
+    }
+
+    const slope = numerator / denom;
+    const intercept = meanY - slope * meanX;
+    const y0 = slope * xMin + intercept;
+    const y1 = slope * xMax + intercept;
+
+    if (!Number.isFinite(y0) || !Number.isFinite(y1)) {
+        return null;
+    }
+
+    return {
+        x0: xMin,
+        x1: xMax,
+        y0,
+        y1
+    };
+}
 
 /** Create a stable hash for cache keys. */
 function hashLogoSource(source) {
@@ -231,6 +395,38 @@ howSelect.addEventListener("change", e => {
     renderChart();
 });
 
+/** Populate a stat selector with all available options. */
+function populateStatSelect(select, selectedValue) {
+    select.innerHTML = "";
+    const sortedOptions = STAT_OPTIONS
+        .map(stat => ({ stat, label: formatStatLabel(stat) }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+    sortedOptions.forEach(({ stat, label }) => {
+        const option = document.createElement("option");
+        option.value = stat;
+        option.textContent = label;
+        select.appendChild(option);
+    });
+    select.value = selectedValue;
+}
+
+xStatSelect.addEventListener("change", e => {
+    xStat = e.target.value;
+    renderChart();
+});
+
+yStatSelect.addEventListener("change", e => {
+    yStat = e.target.value;
+    renderChart();
+});
+
+if (regressionToggle) {
+    regressionToggle.addEventListener("change", () => {
+        renderChart();
+    });
+}
+
 /** Fetch data and render the Plotly chart for the current filter. */
 async function renderChart() {
     /*
@@ -250,12 +446,21 @@ async function renderChart() {
     let rows;
     let averages;
     try {
+        const needsNationalAverages = how !== "All Teams";
         const [rowsResponse, averagesResponse] = await Promise.all([
-            fetch(`/api/fetch_top_68?how=${encodeURIComponent(how)}`, { cache: "no-store" }),
-            fetch('/api/get_averages_for_net', { cache: "no-store" })
+            fetch(`/api/fetch_plotly?how=${encodeURIComponent(how)}&x=${encodeURIComponent(xStat)}&y=${encodeURIComponent(yStat)}`, { cache: "no-store" }),
+            needsNationalAverages
+                ? fetch(`/api/get_plotly_averages?x=${encodeURIComponent(xStat)}&y=${encodeURIComponent(yStat)}`, { cache: "no-store" })
+                : Promise.resolve(null)
         ]);
+        if (!rowsResponse.ok) {
+            throw new Error("Plotly data request failed.");
+        }
         rows = await rowsResponse.json();
-        averages = await averagesResponse.json();
+        if (averagesResponse && !averagesResponse.ok) {
+            throw new Error("Plotly averages request failed.");
+        }
+        averages = averagesResponse ? await averagesResponse.json() : null;
         // console.log("rows length:", rows?.length, "sample:", rows?.[0]);
     } catch (e) {
         console.error("Fetch/JSON failed:", e);
@@ -281,15 +486,15 @@ async function renderChart() {
     const mad = [];
 
     for (const r of rows) {
-        const off = Number(r.offensive_rating_adjusted);
-        const def = Number(r.defensive_rating_adjusted);
+        const xVal = Number(r.x_value);
+        const yVal = Number(r.y_value);
         const n = Number(r.net_rating_adjusted);
         const m = Number(r.madness_rating);
 
-        if (!Number.isFinite(off) || !Number.isFinite(def)) continue;
+        if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) continue;
 
-        x.push(off);
-        y.push(def);
+        x.push(xVal);
+        y.push(yVal);
         labels.push(r.team_name);
         net.push(Number.isFinite(n) ? n : null);
         mad.push(Number.isFinite(m) ? m : null);
@@ -304,9 +509,19 @@ async function renderChart() {
 
     if (x.length === 0) {
         chartDiv.innerHTML = "<p>No valid points to plot.</p>";
+        if (correlationValue) {
+            correlationValue.textContent = "--";
+        }
         return;
     }
 
+    if (correlationValue) {
+        const corr = computeCorrelation(x, y);
+        correlationValue.textContent = corr === null ? "--" : corr.toFixed(3);
+    }
+
+    const xLabel = formatStatLabel(xStat);
+    const yLabel = formatStatLabel(yStat);
     const trace = {
         type: "scatter",
         mode: "markers",
@@ -316,16 +531,16 @@ async function renderChart() {
         customdata: customData,
         hovertemplate:
             "<b>%{text}</b><br>" +
-            "Adj ORtg: %{x:.2f}<br>" +
-            "Adj DRtg: %{y:.2f}<br>" +
+            `${xLabel}: %{x:.2f}<br>` +
+            `${yLabel}: %{y:.2f}<br>` +
             "Adj Net: %{customdata[0]:.2f}<br>" + 
             "Madness Rating: %{customdata[1]:.2f}" + 
             "<extra></extra>",
         marker: { size: 12, color: "rgba(0, 0, 0, 0)" }
     };
 
-    const offMean = x.reduce((a, b) => a + b, 0) / x.length;
-    const defMean = y.reduce((a, b) => a + b, 0) / y.length;
+    const xMean = x.reduce((a, b) => a + b, 0) / x.length;
+    const yMean = y.reduce((a, b) => a + b, 0) / y.length;
     const xMin = Math.min(...x);
     const xMax = Math.max(...x);
     const yMin = Math.min(...y);
@@ -362,120 +577,141 @@ async function renderChart() {
         };
     }).filter(Boolean);
 
-    let layout = {};
-    if (how != 'All Teams') {
-        layout = {
-            title: how + ": Offensive vs Defensive Efficiency",
-            xaxis: { title: "Offensive Rating Adjusted" },
-            yaxis: { title: "Defensive Rating Adjusted", autorange: "reversed" },
-            dragmode: "pan",
-            shapes: [
-                // Vertical offensive average
-                {
-                    type: "line", xref: "x", yref: "paper", x0: offMean, x1: offMean, y0: 0, y1: 1, line: {color: "red", width: 2, dash: "dot"}
-                },
-                // Horizontal defensive average
-                {
-                    type: "line", xref: "paper", yref: "y", x0: 0, x1: 1, y0: defMean, y1: defMean, line: {color: "red", width: 2, dash: "dot"}
-                },
-                // Vertical national offensive average
-                {
-                    type: "line", xref: "x", yref: "paper", x0: averages[0].aoff, x1: averages[0].aoff, y0: 0, y1: 1, line: {color: "green", width: 2, dash: "dot"}
-                },
-                // Horizontal national defensive average
-                {
-                    type: "line", xref: "paper", yref: "y", x0: 0, x1: 1, y0: averages[0].adef, y1: averages[0].adef, line: {color: "green", width: 2, dash: "dot"}
-                },
-            ],
-            annotations: [
-                {
-                    x: offMean,
-                    y: 1.02,
-                    xref: "x",
-                    yref: "paper",
-                    text: `Avg ORtg: ${offMean.toFixed(2)}`,
-                    showarrow: false,
-                    font: { color: "red", size: 10 },
-                    xanchor: "left",
-                    yanchor: "top"
-                },
-                {
-                    x: -0.02,
-                    y: defMean,
-                    xref: "paper",
-                    yref: "y",
-                    text: `Avg DRtg: ${defMean.toFixed(2)}`,
-                    showarrow: false,
-                    font: { color: "red", size: 10 },
-                    xanchor: "left",
-                    yanchor: "top"
-                },
-                {
-                    x: averages[0].aoff,
-                    y: 1.02,
-                    xref: "x",
-                    yref: "paper",
-                    text: `National Avg ORtg: ${averages[0].aoff.toFixed(2)}`,
-                    showarrow: false,
-                    font: { color: "green", size: 10 },
-                    xanchor: "left",
-                    yanchor: "top"
-                },
-                {
-                    x: -0.02,
-                    y: averages[0].adef,
-                    xref: "paper",
-                    yref: "y",
-                    text: `National Avg DRtg: ${averages[0].adef.toFixed(2)}`,
-                    showarrow: false,
-                    font: { color: "green", size: 10 },
-                    xanchor: "left",
-                    yanchor: "top"
-                }
-            ]
-        };
-    } else {
-        layout = {
-            title: how + ": Offensive vs Defensive Efficiency",
-            xaxis: { title: "Offensive Rating Adjusted" },
-            yaxis: { title: "Defensive Rating Adjusted", autorange: "reversed" },
-            dragmode: "pan",
-            shapes: [
-                // Vertical offensive average
-                {
-                    type: "line", xref: "x", yref: "paper", x0: offMean, x1: offMean, y0: 0, y1: 1, line: {color: "red", width: 2, dash: "dot"}
-                },
-                // Horizontal defensive average
-                {
-                    type: "line", xref: "paper", yref: "y", x0: 0, x1: 1, y0: defMean, y1: defMean, line: {color: "red", width: 2, dash: "dot"}
-                }
-            ],
-            annotations: [
-                {
-                    x: offMean,
-                    y: 1.02,
-                    xref: "x",
-                    yref: "paper",
-                    text: `Avg ORtg: ${offMean.toFixed(2)}`,
-                    showarrow: false,
-                    font: { color: "red", size: 10 },
-                    xanchor: "left",
-                    yanchor: "top"
-                },
-                {
-                    x: -0.02,
-                    y: defMean,
-                    xref: "paper",
-                    yref: "y",
-                    text: `Avg DRtg: ${defMean.toFixed(2)}`,
-                    showarrow: false,
-                    font: { color: "red", size: 10 },
-                    xanchor: "left",
-                    yanchor: "top"
-                }
-            ]
-        };
+    const xAxis = { title: xLabel };
+    const yAxis = { title: yLabel };
+    if (LOWER_IS_BETTER.has(xStat)) {
+        xAxis.autorange = "reversed";
     }
+    if (LOWER_IS_BETTER.has(yStat)) {
+        yAxis.autorange = "reversed";
+    }
+
+    const shapes = [
+        {
+            type: "line",
+            xref: "x",
+            yref: "paper",
+            x0: xMean,
+            x1: xMean,
+            y0: 0,
+            y1: 1,
+            line: {color: "red", width: 2, dash: "dot"},
+            layer: "below"
+        },
+        {
+            type: "line",
+            xref: "paper",
+            yref: "y",
+            x0: 0,
+            x1: 1,
+            y0: yMean,
+            y1: yMean,
+            line: {color: "red", width: 2, dash: "dot"},
+            layer: "below"
+        }
+    ];
+
+    const annotations = [
+        {
+            x: xMean,
+            y: 1.02,
+            xref: "x",
+            yref: "paper",
+            text: `Avg ${xLabel}: ${xMean.toFixed(2)}`,
+            showarrow: false,
+            font: { color: "red", size: 10 },
+            xanchor: "left",
+            yanchor: "top"
+        },
+        {
+            x: -0.02,
+            y: yMean,
+            xref: "paper",
+            yref: "y",
+            text: `Avg ${yLabel}: ${yMean.toFixed(2)}`,
+            showarrow: false,
+            font: { color: "red", size: 10 },
+            xanchor: "left",
+            yanchor: "top"
+        }
+    ];
+
+    if (how !== "All Teams" && averages && Number.isFinite(averages.x_avg) && Number.isFinite(averages.y_avg)) {
+        shapes.push(
+            {
+                type: "line",
+                xref: "x",
+                yref: "paper",
+                x0: averages.x_avg,
+                x1: averages.x_avg,
+                y0: 0,
+                y1: 1,
+                line: {color: "green", width: 2, dash: "dot"},
+                layer: "below"
+            },
+            {
+                type: "line",
+                xref: "paper",
+                yref: "y",
+                x0: 0,
+                x1: 1,
+                y0: averages.y_avg,
+                y1: averages.y_avg,
+                line: {color: "green", width: 2, dash: "dot"},
+                layer: "below"
+            }
+        );
+        annotations.push(
+            {
+                x: averages.x_avg,
+                y: 1.02,
+                xref: "x",
+                yref: "paper",
+                text: `National Avg ${xLabel}: ${averages.x_avg.toFixed(2)}`,
+                showarrow: false,
+                font: { color: "green", size: 10 },
+                xanchor: "left",
+                yanchor: "top"
+            },
+            {
+                x: -0.02,
+                y: averages.y_avg,
+                xref: "paper",
+                yref: "y",
+                text: `National Avg ${yLabel}: ${averages.y_avg.toFixed(2)}`,
+                showarrow: false,
+                font: { color: "green", size: 10 },
+                xanchor: "left",
+                yanchor: "top"
+            }
+        );
+    }
+
+    if (regressionToggle && regressionToggle.checked) {
+        const regression = computeRegressionLine(x, y, xMin, xMax);
+        if (regression) {
+            shapes.push({
+                type: "line",
+                xref: "x",
+                yref: "y",
+                x0: regression.x0,
+                x1: regression.x1,
+                y0: regression.y0,
+                y1: regression.y1,
+                line: { color: "blue", width: 2 },
+                layer: "below"
+            });
+        }
+    }
+
+    let layout = {
+        title: `${how}: ${xLabel} vs ${yLabel}`,
+        xaxis: xAxis,
+        yaxis: yAxis,
+        dragmode: "pan",
+        shapes,
+        annotations
+    };
 
     layout.images = logoImages;
     const plotConfig = { scrollZoom: true, responsive: true };
@@ -489,6 +725,8 @@ async function renderChart() {
 
 /** Initialize the Plotly page on load. */
 async function initializePage() {
+    populateStatSelect(xStatSelect, xStat);
+    populateStatSelect(yStatSelect, yStat);
     renderChart();
     if (typeof requestIdleCallback === "function") {
         requestIdleCallback(() => prewarmAllTeamLogos(), { timeout: 800 });
